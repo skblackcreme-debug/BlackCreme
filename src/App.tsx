@@ -119,7 +119,7 @@ export default function App() {
             transition={{ duration: 0.8 }}
             className="text-6xl md:text-8xl font-logo text-white mb-6 leading-[0.9] tracking-tighter text-balance"
           >
-            Black<br/><span className="text-accent-caramel drop-shadow-md">Crème</span>
+            <span className="text-black drop-shadow-md">Black</span><br/><span className="text-accent-caramel drop-shadow-md">Crème</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
