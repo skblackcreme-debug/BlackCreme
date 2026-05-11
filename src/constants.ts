@@ -36,6 +36,24 @@ export const PRODUCTS: Product[] = [
     category: Category.BASQUE,
     image: '/images/Ferrero Rocher Hazelnut Basque.jpeg',
   },
+  {
+    id: 'b04',
+    code: 'B04',
+    name: 'Signature Creamy Classic Basque (No Flour)',
+    description: 'Our signature flourless basque cheesecake — ultra-creamy, dense and velvety smooth.',
+    price: 29.90,
+    category: Category.BASQUE,
+    image: '/images/Signature Creamy Classic Basque (No Flour).jpeg',
+  },
+  {
+    id: 'b05',
+    code: 'B05',
+    name: 'Emerald Pistachio Basque',
+    description: 'Luxurious basque cheesecake infused with rich pistachio for a nutty, elegant finish.',
+    price: 38.90,
+    category: Category.BASQUE,
+    image: '/images/Emerald Pistachio Basque.jpeg',
+  },
   // Tiramisu Cake Series
   {
     id: 't01',
