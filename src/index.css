@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Berkshire+Swash&family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --font-logo: "Berkshire Swash", cursive;
+
+  --color-primary-dark: #2C1810;
+  --color-primary-cream: #FDF6EE;
+  --color-accent-caramel: #C4956A;
+  --color-accent-caramel-dark: #A37B58;
+  --color-gray-soft: #8E8279;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-primary-cream text-primary-dark font-sans font-light;
+  }
+  h1, h2, h3, h4 {
+    @apply font-serif font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  .app-container {
+    @apply max-w-7xl mx-auto px-4 lg:px-10 py-10 lg:py-20 grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10 lg:gap-16;
+  }
+
+  .left-column {
+    @apply flex flex-col justify-between h-full;
+  }
+
+  .product-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8;
+  }
+
+  .product-card {
+    @apply bg-white rounded-xl p-4 shadow-[0_10px_30px_rgba(44,24,16,0.05)] border border-primary-dark/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(44,24,16,0.1)];
+  }
+
+  .right-column {
+    @apply bg-white border border-primary-dark/10 rounded-[32px] p-8 flex flex-col shadow-[20px_20px_60px_rgba(44,24,16,0.08)];
+  }
+
+  .payment-box {
+    @apply bg-primary-cream p-5 rounded-xl mt-6 border-l-4 border-accent-caramel;
+  }
+
+  .whatsapp-btn {
+    @apply bg-primary-dark text-primary-cream w-full py-5 rounded-xl text-center font-semibold uppercase tracking-[1.5px] transition-all hover:opacity-90 active:scale-[0.98];
+  }
+
+  .code-badge {
+    @apply text-[10px] font-bold tracking-widest uppercase text-accent-caramel mb-1;
+  }
+}
+
+.glass-nav {
+  @apply bg-primary-cream/80 backdrop-blur-md border-b border-primary-dark/5;
+}
+
+.vertical-label {
+  @apply fixed right-5 top-1/2 -translate-y-1/2 rotate-90 text-[10px] tracking-[4px] uppercase text-gray-soft opacity-30 select-none pointer-events-none hidden xl:block;
+}
