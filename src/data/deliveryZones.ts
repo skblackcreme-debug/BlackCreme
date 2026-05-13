@@ -24,17 +24,17 @@ export const SUPPORTED_STATES: SupportedState[] = [
   'Wilayah Persekutuan Kuala Lumpur',
 ];
 
-const ZONE_FEE: Record<DeliveryZone, number> = { A: 5, B: 10, C: 15 };
+const ZONE_FEE: Record<DeliveryZone, number> = { A: 8, B: 12, C: 15 };
 const ZONE_ETA: Record<DeliveryZone, string> = {
   A: '30–45 min',
   B: '45–60 min',
   C: '60–90 min',
 };
 
-// Delivery zones measured from Puchong (bakery base):
-// Zone A  RM 5   ≤15 km  — Puchong, Subang Jaya/USJ, Petaling Jaya, Bangsar
-// Zone B  RM 10  15–30km — Shah Alam, Central KL, Kajang/Bangi, Putrajaya, Cyberjaya
-// Zone C  RM 15  >30 km  — Klang, Rawang, Kepong, North KL
+// Delivery zones measured from Puchong Jaya (bakery base):
+// Zone A  RM 8   ≤15 km  — Puchong, Subang Jaya/USJ, Petaling Jaya, Bangsar
+// Zone B  RM 12  15–30km — Shah Alam, Central KL, Kajang/Bangi, Putrajaya, Cyberjaya
+// Zone C  RM 15  30–40km — Klang, Kepong, North KL  (>40 km not serviced)
 
 export const POSTCODE_LOOKUP: Record<string, PostcodeEntry> = {
   // ── Zone A — Puchong (bakery base) ────────────────────────────────────────
@@ -137,19 +137,15 @@ export const POSTCODE_LOOKUP: Record<string, PostcodeEntry> = {
   '63000': { city: 'Cyberjaya', state: 'Selangor', zone: 'B' },
   '63100': { city: 'Cyberjaya', state: 'Selangor', zone: 'B' },
 
-  // ── Zone C — Klang (~35 km) ───────────────────────────────────────────────
-  '41000': { city: 'Klang',           state: 'Selangor', zone: 'C' },
-  '41100': { city: 'Klang',           state: 'Selangor', zone: 'C' },
-  '41200': { city: 'Klang',           state: 'Selangor', zone: 'C' },
-  '41300': { city: 'Klang',           state: 'Selangor', zone: 'C' },
-  '41400': { city: 'Klang',           state: 'Selangor', zone: 'C' },
-  '41500': { city: 'Klang',           state: 'Selangor', zone: 'C' },
-  '41710': { city: 'Pelabuhan Klang', state: 'Selangor', zone: 'C' },
-
-  // ── Zone C — Rawang (~44 km) ──────────────────────────────────────────────
-  '48000': { city: 'Rawang',     state: 'Selangor', zone: 'C' },
-  '48050': { city: 'Rawang',     state: 'Selangor', zone: 'C' },
-  '48100': { city: 'Batu Arang', state: 'Selangor', zone: 'C' },
+  // ── Zone C — Klang (~35–38 km) ───────────────────────────────────────────
+  '41000': { city: 'Klang', state: 'Selangor', zone: 'C' },
+  '41100': { city: 'Klang', state: 'Selangor', zone: 'C' },
+  '41200': { city: 'Klang', state: 'Selangor', zone: 'C' },
+  '41300': { city: 'Klang', state: 'Selangor', zone: 'C' },
+  '41400': { city: 'Klang', state: 'Selangor', zone: 'C' },
+  '41500': { city: 'Klang', state: 'Selangor', zone: 'C' },
+  // 41710 Pelabuhan Klang (~41 km) removed — over 40 km limit
+  // 48000/48050 Rawang (~44 km) and 48100 Batu Arang removed — over 40 km limit
 
   // ── Zone C — Kepong / Setapak (North KL, ~28–30 km) ──────────────────────
   '52100': { city: 'Kepong',       state: 'Wilayah Persekutuan Kuala Lumpur', zone: 'C' },

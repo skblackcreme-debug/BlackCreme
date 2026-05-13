@@ -89,6 +89,7 @@ export const PRODUCTS: Product[] = [
     description: 'A sweet "Love You" cake topper to personalise your order.',
     price: 1.50,
     category: Category.ADDONS,
+    image: '/images/SmallLoveYouTopper.jpeg',
   },
   {
     id: 'a02',
@@ -96,6 +97,7 @@ export const PRODUCTS: Product[] = [
     description: 'Cute birthday cake topper to make every celebration special.',
     price: 1.50,
     category: Category.ADDONS,
+    image: '/images/SmallBirthdayTopper.jpeg',
   },
   {
     id: 'a03',
@@ -103,6 +105,7 @@ export const PRODUCTS: Product[] = [
     description: 'Elegant rose gold birthday candle for a glamorous touch.',
     price: 1.00,
     category: Category.ADDONS,
+    image: '/images/RoseGoldCandle1pc.jpeg',
   },
   {
     id: 'a04',
@@ -110,12 +113,22 @@ export const PRODUCTS: Product[] = [
     description: 'Classic gold birthday candle to light up your celebration.',
     price: 1.00,
     category: Category.ADDONS,
+    image: '/images/GoldCandle1pc.jpeg',
   },
   {
     id: 'a05',
-    name: 'Cutlery Set For 5pax',
-    description: 'Convenient disposable cutlery set for 5 people.',
+    name: 'Cutlery Set For 5pax (Black)',
+    description: 'Convenient disposable cutlery set for 5 people, in black.',
     price: 8.00,
     category: Category.ADDONS,
+    image: '/images/CutlerySetFor5Pax-Black.jpeg',
+  },
+  {
+    id: 'a06',
+    name: 'Cutlery Set For 5pax (Pink)',
+    description: 'Convenient disposable cutlery set for 5 people, in pink.',
+    price: 8.00,
+    category: Category.ADDONS,
+    image: '/images/CutlerySetFor5Pax-Pink.jpeg',
   },
 ];

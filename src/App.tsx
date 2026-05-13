@@ -20,13 +20,20 @@ import {
   ChevronRight,
   MessageCircle,
 } from 'lucide-react';
-import { PRODUCTS, WHATSAPP_NUMBER, BANK_INFO } from './constants';
+import { PRODUCTS, WHATSAPP_NUMBER } from './constants';
 import { Category, Product } from './types';
 import { useCart } from './hooks/useCart';
 import { useDeliveryFee } from './features/order/hooks/useDeliveryFee';
 import { POSTCODE_LOOKUP, STATE_CITIES, SUPPORTED_STATES, isServiceablePostcode } from './data/deliveryZones';
 
-const PAYMENT_OPTIONS = ['Online Transfer', 'Cash on Delivery'];
+const TIME_SLOTS = [
+  { label: '10am – 12pm', startHour: 10 },
+  { label: '12pm – 2pm',  startHour: 12 },
+  { label: '2pm – 4pm',   startHour: 14 },
+  { label: '4pm – 6pm',   startHour: 16 },
+  { label: '6pm – 8pm',   startHour: 18 },
+  { label: '8pm – 10pm',  startHour: 20 },
+];
 
 export default function App() {
   const { cart, addToCart, removeFromCart, updateQuantity, totalItems, totalPrice } = useCart();
@@ -45,7 +52,6 @@ export default function App() {
     date: '',
     time: '',
     cakeMessage: '',
-    paymentMethod: 'Online Transfer',
   });
 
   const filteredProducts = PRODUCTS.filter(p => p.category === activeCategory);
@@ -91,9 +97,7 @@ export default function App() {
       `💰 Subtotal : RM ${subtotal.toFixed(2)}`,
       `🚗 Delivery : ${fee === 0 ? 'Free' : `RM ${fee.toFixed(2)}`}`,
       `💳 TOTAL    : RM ${total.toFixed(2)}`,
-      `💵 Payment  : ${form.paymentMethod}`,
       `─────────────────────`,
-      `Bank: ${BANK_INFO.name}  |  Acc: ${BANK_INFO.accNo}`,
     ].filter(line => line !== null).join('\n');
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
   };
@@ -155,36 +159,29 @@ export default function App() {
       </AnimatePresence>
 
       {/* Hero Section */}
-      <section id="hero" className="relative h-[90vh] flex items-center justify-center pt-16">
-        <div className="absolute inset-0 z-0">
-          <img
-            src="input_file_0.png"
-            alt="Hero Background"
-            className="w-full h-full object-cover brightness-[0.4]"
-            referrerPolicy="no-referrer"
-          />
-        </div>
+      <section id="hero" className="relative h-[90vh] flex items-center justify-center pt-16 bg-primary-cream">
         <div className="relative z-10 text-center px-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="flex items-center justify-center gap-2 mb-6"
           >
-             <span className="font-serif italic text-white/60 tracking-wider text-sm">Est. 2025</span>
+            <span className="font-serif italic text-primary-dark/40 tracking-wider text-xl">Est. 2026</span>
           </motion.div>
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-6xl md:text-8xl font-logo text-white mb-6 leading-[0.9] tracking-tighter text-balance"
+            className="text-6xl md:text-8xl font-logo text-primary-dark mb-6 leading-[0.9] tracking-tighter text-balance"
           >
-            <span className="text-black drop-shadow-md">Black</span><br/><span className="text-accent-caramel drop-shadow-md">Crème</span>
+            <span className="text-black drop-shadow-sm">Black</span><br/>
+            <span className="text-accent-caramel drop-shadow-sm">Crème</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-lg md:text-xl text-primary-cream/80 mb-10 max-w-md mx-auto font-light tracking-wide"
+            className="text-lg md:text-xl text-primary-dark/50 mb-10 max-w-md mx-auto font-light tracking-wide"
           >
             Handcrafted Basque & Tiramisu Cakes. Pure Indulgence.
           </motion.p>
@@ -275,15 +272,6 @@ export default function App() {
             <div className="flex justify-between items-center mb-6">
               <span className="text-xl font-serif">Total</span>
               <span className="text-2xl font-serif text-accent-caramel">RM {totalPrice.toFixed(2)}</span>
-            </div>
-
-            <div className="payment-box mb-6">
-              <div className="text-[10px] uppercase font-bold opacity-40 mb-2 tracking-widest text-primary-dark">Bank Transfer Details</div>
-              <div className="font-bold text-lg leading-tight uppercase tracking-tight">{BANK_INFO.name}</div>
-              <div className="font-mono text-xl tracking-wider text-accent-caramel mt-1">{BANK_INFO.accNo}</div>
-              <p className="text-[10px] mt-3 opacity-60 italic leading-relaxed text-balance">
-                Please send proof of payment via WhatsApp for order confirmation.
-              </p>
             </div>
 
             <button
@@ -440,20 +428,48 @@ export default function App() {
                 )}
 
                 {/* Date + Time */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[10px] uppercase tracking-widest font-bold opacity-50 block mb-1">Date *</label>
-                    <input type="date" value={orderForm.date}
-                      onChange={(e) => setOrderForm({ ...orderForm, date: e.target.value })}
-                      className="w-full border border-primary-dark/15 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent-caramel" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] uppercase tracking-widest font-bold opacity-50 block mb-1">Time Slot</label>
-                    <input type="text" placeholder="e.g. 2pm – 4pm" value={orderForm.time}
-                      onChange={(e) => setOrderForm({ ...orderForm, time: e.target.value })}
-                      className="w-full border border-primary-dark/15 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent-caramel" />
-                  </div>
-                </div>
+                {(() => {
+                  const now = new Date();
+                  const nowHours = now.getHours() + now.getMinutes() / 60;
+                  const pad = (n: number) => String(n).padStart(2, '0');
+                  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+                  const tomorrow = new Date(now);
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  const tomorrowStr = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`;
+                  const hasAvailableToday = TIME_SLOTS.some(s => s.startHour >= nowHours + 4);
+                  const minDate = hasAvailableToday ? todayStr : tomorrowStr;
+                  const availableSlots = orderForm.date === todayStr
+                    ? TIME_SLOTS.filter(s => s.startHour >= nowHours + 4)
+                    : TIME_SLOTS;
+                  return (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] uppercase tracking-widest font-bold opacity-50 block mb-1">Date *</label>
+                        <input
+                          type="date"
+                          value={orderForm.date}
+                          min={minDate}
+                          onChange={(e) => setOrderForm(f => ({ ...f, date: e.target.value, time: '' }))}
+                          className="w-full border border-primary-dark/15 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent-caramel"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase tracking-widest font-bold opacity-50 block mb-1">Time Slot</label>
+                        <select
+                          value={orderForm.time}
+                          onChange={(e) => setOrderForm(f => ({ ...f, time: e.target.value }))}
+                          disabled={!orderForm.date}
+                          className="w-full border border-primary-dark/15 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent-caramel bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <option value="">— Select —</option>
+                          {availableSlots.map(s => (
+                            <option key={s.label} value={s.label}>{s.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Cake Message */}
                 <div>
@@ -461,24 +477,6 @@ export default function App() {
                   <input type="text" placeholder="e.g. Happy Birthday Mama" value={orderForm.cakeMessage}
                     onChange={(e) => setOrderForm({ ...orderForm, cakeMessage: e.target.value })}
                     className="w-full border border-primary-dark/15 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent-caramel" />
-                </div>
-
-                {/* Payment Method */}
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest font-bold opacity-50 block mb-2">Payment Method</label>
-                  <div className="flex gap-3">
-                    {PAYMENT_OPTIONS.map((opt) => (
-                      <button key={opt} type="button"
-                        onClick={() => setOrderForm({ ...orderForm, paymentMethod: opt })}
-                        className={`flex-1 py-2.5 text-xs font-semibold rounded-lg border transition-all ${
-                          orderForm.paymentMethod === opt
-                            ? 'bg-primary-dark text-white border-primary-dark'
-                            : 'border-primary-dark/15 text-primary-dark hover:border-accent-caramel'
-                        }`}>
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
                 </div>
 
                 {/* Order Summary */}
@@ -556,8 +554,32 @@ export default function App() {
 
       {/* Footer */}
       <footer id="contact" className="py-20 bg-primary-dark text-white/30 text-center text-[10px] tracking-[4px] uppercase border-t border-white/5">
-        <span className="font-logo text-lg mb-4 block tracking-normal text-accent-caramel opacity-80">Black Crème</span>
-        © 2025 • Handcrafted with Indulgence
+        <span className="font-logo text-lg mb-4 block tracking-normal normal-case text-accent-caramel opacity-80">Black Crème</span>
+        <div className="flex items-center justify-center gap-5 mb-5">
+          <a
+            href="https://www.facebook.com/people/Black-Cr%C3%A8me/61583773742224/?rdid=bKDjt5QGPnWCCvhz&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F189KmRkJik%2F"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Facebook"
+            className="text-white/30 hover:text-accent-caramel transition-colors"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+            </svg>
+          </a>
+          <a
+            href="https://www.instagram.com/black.creme"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram"
+            className="text-white/30 hover:text-accent-caramel transition-colors"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+            </svg>
+          </a>
+        </div>
+        © 2026 • Handcrafted with Indulgence
       </footer>
     </div>
   );
