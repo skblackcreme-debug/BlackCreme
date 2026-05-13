@@ -10,12 +10,12 @@ export const BANK_INFO = {
 export const PRODUCTS: Product[] = [
   // Basque Cake Series
   {
-    id: 'b01',
-    name: 'Mango Luxe Basque Creamy',
-    description: 'Creamy basque cheesecake topped with fresh, juicy mango chunks.',
-    price: 36.90,
+    id: 'b04',
+    name: 'Signature Creamy Classic Basque (No Flour)',
+    description: 'Our signature flourless basque cheesecake — ultra-creamy, dense and velvety smooth.',
+    price: 29.90,
     category: Category.BASQUE,
-    image: '/images/Mango Luxe Basque Creamy.jpeg',
+    image: '/images/Signature Creamy Classic Basque (No Flour).jpeg',
   },
   {
     id: 'b02',
@@ -34,14 +34,6 @@ export const PRODUCTS: Product[] = [
     image: '/images/Ferrero Rocher Hazelnut Basque.jpeg',
   },
   {
-    id: 'b04',
-    name: 'Signature Creamy Classic Basque (No Flour)',
-    description: 'Our signature flourless basque cheesecake — ultra-creamy, dense and velvety smooth.',
-    price: 29.90,
-    category: Category.BASQUE,
-    image: '/images/Signature Creamy Classic Basque (No Flour).jpeg',
-  },
-  {
     id: 'b05',
     name: 'Emerald Pistachio Basque',
     description: 'Luxurious basque cheesecake infused with rich pistachio for a nutty, elegant finish.',
@@ -49,7 +41,23 @@ export const PRODUCTS: Product[] = [
     category: Category.BASQUE,
     image: '/images/Emerald Pistachio Basque.jpeg',
   },
+  {
+    id: 'b01',
+    name: 'Mango Luxe Basque Creamy',
+    description: 'Creamy basque cheesecake topped with fresh, juicy mango chunks.',
+    price: 36.90,
+    category: Category.BASQUE,
+    image: '/images/Mango Luxe Basque Creamy.jpeg',
+  },
   // Tiramisu Cake Series
+  {
+    id: 't04',
+    name: 'Longan Cloud Tiramisu (Bestseller)',
+    description: 'Refreshing floral delight featuring sweet longan berries.',
+    price: 27.90,
+    category: Category.TIRAMISU,
+    image: '/images/Longan Cloud Tiramisu.jpeg',
+  },
   {
     id: 't01',
     name: 'Classic Tiramisu',
@@ -74,13 +82,22 @@ export const PRODUCTS: Product[] = [
     category: Category.TIRAMISU,
     image: '/images/Snow White Apple Tiramisu.jpeg',
   },
+  // Party Size
   {
-    id: 't04',
-    name: 'Longan Cloud Tiramisu',
-    description: 'Refreshing floral delight featuring sweet longan berries.',
-    price: 27.90,
-    category: Category.TIRAMISU,
-    image: '/images/Longan Cloud Tiramisu.jpeg',
+    id: 'p01',
+    name: 'Signature Classic Tiramisu Party Size',
+    description: 'Our classic tiramisu in a generous party-sized portion — perfect for celebrations.',
+    price: 99.00,
+    category: Category.PARTY_SIZE,
+    image: '/images/SignatureClassicTiramisuPartySize.jpeg',
+  },
+  {
+    id: 'p02',
+    name: 'Longan Overload Tiramisu Party Size',
+    description: 'Loaded with sweet longan in a party-sized tiramisu — a crowd favourite.',
+    price: 108.00,
+    category: Category.PARTY_SIZE,
+    image: '/images/LonganOverloadTiramisuPartySize.jpeg',
   },
   // Add-ons
   {

@@ -1,6 +1,7 @@
 export enum Category {
   BASQUE = 'Basque Cake',
   TIRAMISU = 'Tiramisu Cake',
+  PARTY_SIZE = 'Party Size',
   ADDONS = 'Add-ons',
 }
 

@@ -24,7 +24,7 @@ export const SUPPORTED_STATES: SupportedState[] = [
   'Wilayah Persekutuan Kuala Lumpur',
 ];
 
-const ZONE_FEE: Record<DeliveryZone, number> = { A: 8, B: 12, C: 15 };
+const ZONE_FEE: Record<DeliveryZone, number> = { A: 8, B: 12, C: 20 };
 const ZONE_ETA: Record<DeliveryZone, string> = {
   A: '30–45 min',
   B: '45–60 min',
@@ -34,7 +34,7 @@ const ZONE_ETA: Record<DeliveryZone, string> = {
 // Delivery zones measured from Puchong Jaya (bakery base):
 // Zone A  RM 8   ≤15 km  — Puchong, Subang Jaya/USJ, Petaling Jaya, Bangsar
 // Zone B  RM 12  15–30km — Shah Alam, Central KL, Kajang/Bangi, Putrajaya, Cyberjaya
-// Zone C  RM 15  30–40km — Klang, Kepong, North KL  (>40 km not serviced)
+// Zone C  RM 20  30–40km — Klang, Kepong, North KL  (>40 km not serviced)
 
 export const POSTCODE_LOOKUP: Record<string, PostcodeEntry> = {
   // ── Zone A — Puchong (bakery base) ────────────────────────────────────────

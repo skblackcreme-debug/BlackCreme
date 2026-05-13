@@ -208,7 +208,7 @@ export default function App() {
             
             {/* Category Tabs */}
             <div className="flex space-x-6 mt-10 border-b border-primary-dark/10 overflow-x-auto whitespace-nowrap scrollbar-hide">
-              {[Category.BASQUE, Category.TIRAMISU, Category.ADDONS].map((cat) => (
+              {[Category.BASQUE, Category.TIRAMISU, Category.PARTY_SIZE, Category.ADDONS].map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
