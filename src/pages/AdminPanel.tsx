@@ -869,6 +869,7 @@ function SettingsTab() {
   if (loading) return <p className="text-sm text-gray-400">Loading…</p>;
 
   const loginEnabled = settings.login_enabled !== 'false';
+  const signupEnabled = settings.signup_enabled !== 'false';
   const paymentMethod = settings.payment_method ?? 'whatsapp';
 
   return (
@@ -897,6 +898,28 @@ function SettingsTab() {
               className={`w-12 h-6 rounded-full transition-all relative disabled:opacity-50 ${loginEnabled ? 'bg-green-400' : 'bg-gray-200'}`}
             >
               <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${loginEnabled ? 'left-7' : 'left-1'}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Customer Sign Up */}
+        <div className="bg-white rounded-xl p-5 shadow-sm flex items-center justify-between gap-6">
+          <div>
+            <p className="font-medium text-sm">Customer Sign Up</p>
+            <p className="text-[11px] text-gray-400 mt-1 max-w-sm">
+              Allow new customers to create an account. When off, existing accounts can still log in but the registration page is closed.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[10px] uppercase tracking-widest text-gray-400 w-12 text-right">
+              {signupEnabled ? 'On' : 'Off'}
+            </span>
+            <button
+              onClick={() => updateSetting('signup_enabled', signupEnabled ? 'false' : 'true')}
+              disabled={saving === 'signup_enabled'}
+              className={`w-12 h-6 rounded-full transition-all relative disabled:opacity-50 ${signupEnabled ? 'bg-green-400' : 'bg-gray-200'}`}
+            >
+              <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${signupEnabled ? 'left-7' : 'left-1'}`} />
             </button>
           </div>
         </div>
@@ -1020,6 +1043,12 @@ function OrdersTab() {
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' });
 
+  const formatDateTime = (d: string) => {
+    const dt = new Date(d);
+    return dt.toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })
+      + ' · ' + dt.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+  };
+
   const visible = filterStatus === 'all' ? orders : orders.filter(o => o.status === filterStatus);
 
   return (
@@ -1062,6 +1091,9 @@ function OrdersTab() {
                     </div>
                     <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">
                       {formatDate(order.scheduled_date)} · {order.scheduled_time} · {order.delivery_type}
+                    </p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      Ordered {formatDateTime(order.created_at)}
                     </p>
                   </div>
                   <p className="font-serif text-accent-caramel shrink-0">RM {Number(order.total).toFixed(2)}</p>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
@@ -6,6 +6,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [signupEnabled, setSignupEnabled] = useState(true);
+
+  useEffect(() => {
+    supabase.from('site_settings').select('value').eq('key', 'signup_enabled').single().then(({ data }) => {
+      if (data) setSignupEnabled(data.value !== 'false');
+    });
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,10 +80,12 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-xs text-gray-400 mt-6">
-            Don't have an account?{' '}
-            <a href="/register" className="text-accent-caramel font-semibold hover:underline">Create Account</a>
-          </p>
+          {signupEnabled && (
+            <p className="text-center text-xs text-gray-400 mt-6">
+              Don't have an account?{' '}
+              <a href="/register" className="text-accent-caramel font-semibold hover:underline">Create Account</a>
+            </p>
+          )}
         </div>
 
         <p className="text-center mt-6">

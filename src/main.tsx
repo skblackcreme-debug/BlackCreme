@@ -11,6 +11,7 @@ import VerifyEmailPage from './pages/auth/VerifyEmailPage.tsx';
 import ProfilePage from './pages/ProfilePage.tsx';
 import OrdersPage from './pages/OrdersPage.tsx';
 import OrderSuccessPage from './pages/OrderSuccessPage.tsx';
+import StripeTestPage from './pages/StripeTestPage.tsx';
 import { supabase } from './lib/supabase.ts';
 import type { Session } from '@supabase/supabase-js';
 import './index.css';
@@ -20,6 +21,7 @@ function Root() {
   const isAdmin = path.startsWith('/admin');
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) { setLoading(false); return; }
@@ -31,6 +33,15 @@ function Root() {
     return () => subscription.unsubscribe();
   }, [isAdmin]);
 
+  useEffect(() => {
+    if (!isAdmin || loading || !session) return;
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL as string | undefined;
+    if (!adminEmail || session.user.email !== adminEmail) {
+      setAccessDenied(true);
+      supabase.auth.signOut();
+    }
+  }, [isAdmin, loading, session]);
+
   // Auth routes
   if (path === '/login')    return <LoginPage />;
   if (path === '/register') return <RegisterPage />;
@@ -40,11 +51,16 @@ function Root() {
   if (path === '/profile')        return <ProfilePage />;
   if (path === '/orders')         return <OrdersPage />;
   if (path === '/order-success')  return <OrderSuccessPage />;
+  if (path === '/stripe-test')    return <StripeTestPage />;
 
   // Admin routes
   if (isAdmin) {
     if (loading) return null;
-    return session ? <AdminPanel /> : <AdminLogin />;
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL as string | undefined;
+    const isAdminUser = !!session && !!adminEmail && session.user.email === adminEmail;
+    return isAdminUser
+      ? <AdminPanel />
+      : <AdminLogin accessDenied={accessDenied} onDismiss={() => setAccessDenied(false)} />;
   }
 
   // Public site

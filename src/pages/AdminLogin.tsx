@@ -1,16 +1,22 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-export default function AdminLogin() {
+interface Props {
+  accessDenied?: boolean;
+  onDismiss?: () => void;
+}
+
+export default function AdminLogin({ accessDenied, onDismiss }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    onDismiss?.();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) setError('Invalid email or password.');
     setLoading(false);
@@ -47,6 +53,9 @@ export default function AdminLogin() {
             />
           </div>
 
+          {accessDenied && !error && (
+            <p className="text-red-500 text-xs text-center">Access denied. This account does not have admin privileges.</p>
+          )}
           {error && <p className="text-red-500 text-xs text-center">{error}</p>}
 
           <button

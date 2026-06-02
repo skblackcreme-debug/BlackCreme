@@ -304,52 +304,81 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Banner Carousel */}
-      <div className="pt-16 bg-primary-cream">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
-          <BannerCarousel />
-        </div>
-      </div>
+      {/* Hero + Banners — unified section */}
+      <div id="hero" className="mt-16 bg-[#EDE0D0]">
 
-      {/* Hero Section */}
-      <section id="hero" className="relative h-[60vh] flex items-center justify-center bg-primary-cream">
-        <div className="relative z-10 text-center px-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center justify-center gap-2 mb-6"
-          >
-            <span className="font-serif italic text-primary-dark/40 tracking-wider text-xl">Est. 2026</span>
-          </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-6xl md:text-8xl font-logo text-primary-dark mb-6 leading-[0.9] tracking-tighter text-balance"
-          >
-            <span className="text-black drop-shadow-sm">Black</span><br/>
-            <span className="text-accent-caramel drop-shadow-sm">Crème</span>
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-lg md:text-xl text-primary-dark/50 mb-10 max-w-md mx-auto font-light tracking-wide"
-          >
-            Handcrafted Basque & Tiramisu Cakes. Pure Indulgence.
-          </motion.p>
-          <motion.a
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            href="#menu"
-            className="inline-flex items-center px-10 py-5 bg-accent-caramel hover:bg-accent-caramel-dark text-white rounded-full font-semibold tracking-widest uppercase text-xs transition-all transform hover:scale-105 shadow-xl"
-          >
-            Explore Menu
-            <ChevronRight className="ml-2 w-4 h-4" />
-          </motion.a>
+        {/* Hero: product image + text */}
+        <section className="relative overflow-hidden md:h-[70vh]">
+
+          {/* Desktop: product image */}
+          <div className="hidden md:flex absolute right-0 top-0 bottom-0 items-center z-0">
+            <img
+              src="/hero-product.png"
+              alt="Black Crème Biscoff Velvet Tiramisu"
+              className="h-full w-auto"
+            />
+            <div className="absolute inset-y-0 left-0 w-48 bg-gradient-to-r from-[#EDE0D0] to-transparent" />
+          </div>
+
+          {/* Text content */}
+          <div className="relative z-10 flex flex-col justify-center px-8 md:px-14 lg:px-20 pt-12 pb-8 md:py-0 md:h-full">
+            <div className="max-w-[380px]">
+              <motion.span
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="font-serif italic text-primary-dark/40 tracking-wider text-xl block mb-4"
+              >
+                Est. 2026
+              </motion.span>
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="text-6xl md:text-7xl lg:text-8xl font-logo text-primary-dark mb-6 leading-[0.9] tracking-tighter"
+              >
+                <span className="text-black drop-shadow-sm">Black</span><br/>
+                <span className="text-accent-caramel drop-shadow-sm">Crème</span>
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="text-lg text-primary-dark/50 mb-10 font-light tracking-wide"
+              >
+                Handcrafted Basque & Tiramisu Cakes.<br/>Pure Indulgence.
+              </motion.p>
+              <motion.a
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                href="#menu"
+                className="inline-flex items-center px-10 py-5 bg-accent-caramel hover:bg-accent-caramel-dark text-white rounded-full font-semibold tracking-widest uppercase text-xs transition-all transform hover:scale-105 shadow-xl"
+              >
+                Explore Menu
+                <ChevronRight className="ml-2 w-4 h-4" />
+              </motion.a>
+            </div>
+          </div>
+
+          {/* Mobile: image stacked below text */}
+          <div className="md:hidden h-72 w-full">
+            <img
+              src="/hero-product.png"
+              alt="Black Crème Biscoff Velvet Tiramisu"
+              className="w-full h-full object-cover object-top"
+            />
+          </div>
+        </section>
+
+        {/* Banners — outside overflow-hidden, renders freely below hero */}
+        <div className="bg-primary-cream">
+          <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
+            <BannerCarousel />
+          </div>
         </div>
-      </section>
+
+      </div>
 
       {/* Main Content Area */}
       <div className="app-container" id="menu">

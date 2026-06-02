@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export default function RegisterPage() {
@@ -6,6 +6,15 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [signupEnabled, setSignupEnabled] = useState(true);
+  const [checkingSettings, setCheckingSettings] = useState(true);
+
+  useEffect(() => {
+    supabase.from('site_settings').select('value').eq('key', 'signup_enabled').single().then(({ data }) => {
+      if (data) setSignupEnabled(data.value !== 'false');
+      setCheckingSettings(false);
+    });
+  }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +49,28 @@ export default function RegisterPage() {
     setDone(true);
     setLoading(false);
   };
+
+  if (checkingSettings) return null;
+
+  if (!signupEnabled) {
+    return (
+      <div className="min-h-screen bg-primary-cream flex items-center justify-center px-4">
+        <div className="w-full max-w-sm text-center">
+          <h1 className="font-logo text-4xl text-primary-dark mb-8">Black Crème</h1>
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">🔒</span>
+            </div>
+            <h2 className="font-serif text-xl mb-2">Registration Closed</h2>
+            <p className="text-sm text-gray-500">New account registration is currently unavailable. Please check back later.</p>
+          </div>
+          <a href="/login" className="block mt-6 text-[10px] uppercase tracking-widest text-gray-400 hover:text-primary-dark transition-colors">
+            Back to Sign In
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   if (done) {
     return (

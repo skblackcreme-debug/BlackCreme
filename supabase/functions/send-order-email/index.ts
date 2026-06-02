@@ -64,6 +64,8 @@ Deno.serve(async (req) => {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Order Confirmed — Black Crème</title>
+  <link href="https://fonts.googleapis.com/css2?family=Berkshire+Swash&display=swap" rel="stylesheet">
+  <style>@import url('https://fonts.googleapis.com/css2?family=Berkshire+Swash&display=swap');</style>
 </head>
 <body style="margin:0;padding:0;background:#faf7f2;font-family:'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;">
 
@@ -75,7 +77,7 @@ Deno.serve(async (req) => {
       <!-- Header -->
       <div style="background:#1a0f0a;padding:36px 40px;text-align:center;">
         <p style="margin:0 0 4px;font-size:11px;letter-spacing:5px;text-transform:uppercase;color:#c9956a;opacity:0.7;">Handcrafted Desserts</p>
-        <h1 style="margin:0;font-size:36px;color:#c9956a;font-weight:700;letter-spacing:-1px;">Black Crème</h1>
+        <h1 style="margin:0;font-size:36px;color:#c9956a;font-weight:400;font-family:'Berkshire Swash',cursive;letter-spacing:0;">Black Crème</h1>
         <p style="margin:12px 0 0;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#ffffff;opacity:0.4;">Order Confirmed</p>
       </div>
 
@@ -202,13 +204,17 @@ Deno.serve(async (req) => {
       const adminHtml = `
 <!DOCTYPE html>
 <html>
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Berkshire+Swash&display=swap" rel="stylesheet">
+  <style>@import url('https://fonts.googleapis.com/css2?family=Berkshire+Swash&display=swap');</style>
+</head>
 <body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
   <div style="max-width:560px;margin:30px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
 
     <div style="background:#1a0f0a;padding:20px 28px;display:flex;align-items:center;justify-content:space-between;">
       <div>
         <p style="margin:0;color:#c9956a;font-size:11px;letter-spacing:3px;text-transform:uppercase;">New Order</p>
-        <h1 style="margin:4px 0 0;color:#ffffff;font-size:22px;">Black Crème</h1>
+        <h1 style="margin:4px 0 0;color:#ffffff;font-size:22px;font-family:'Berkshire Swash',cursive;font-weight:400;">Black Crème</h1>
       </div>
       <div style="background:#c9956a;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;">
         ${orderRef}

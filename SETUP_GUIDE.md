@@ -14,8 +14,9 @@
 4. [Supabase Edge Functions](#4-supabase-edge-functions)
 5. [Stripe Setup](#5-stripe-setup)
 6. [Resend Email Setup](#6-resend-email-setup)
-7. [Environment Variables](#7-environment-variables)
-8. [Going Live Checklist](#8-going-live-checklist)
+7. [Supabase Auth Email via Resend](#7-supabase-auth-email-via-resend-custom-smtp)
+8. [Environment Variables](#8-environment-variables)
+9. [Going Live Checklist](#9-going-live-checklist)
 
 ---
 
@@ -189,7 +190,8 @@ CREATE TABLE site_settings (
 
 INSERT INTO site_settings (key, value) VALUES
   ('payment_method', 'whatsapp'),
-  ('login_enabled', 'true');
+  ('login_enabled', 'true'),
+  ('signup_enabled', 'true');
 ```
 
 ### Allow NULL on user_id (for guest orders)
@@ -257,8 +259,9 @@ Go to **Supabase Dashboard → Edge Functions → Manage Secrets** and add:
 |---|---|---|
 | `STRIPE_SECRET_KEY` | `sk_test_...` (test) or `sk_live_...` (live) | Now |
 | `RESEND_API_KEY` | `re_...` | Now |
-| `RESEND_FROM_EMAIL` | `Black Crème <orders@blackcreme.com>` | After domain verified |
+| `RESEND_FROM_EMAIL` | `Black Crème <noreply@blackcreme.com>` | After domain verified |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_...` | After webhook created |
+| `ADMIN_EMAIL` | `your@email.com` | Now — receives new order notifications |
 
 > **Note:** `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are automatically injected — do NOT add them manually.
 
@@ -365,7 +368,37 @@ npx supabase functions deploy send-order-email
 
 ---
 
-## 7. Environment Variables
+## 7. Supabase Auth Email via Resend (Custom SMTP)
+
+By default Supabase sends auth emails (reset password, email verification) from `noreply@mail.app.supabase.io`. To send from your own domain:
+
+### Prerequisites
+- Domain verified in Resend (see Section 6)
+
+### Configure Custom SMTP in Supabase
+
+1. Supabase Dashboard → **Project Settings → Authentication → SMTP Settings**
+2. Toggle **Enable Custom SMTP** ON
+3. Fill in:
+
+| Field | Value |
+|---|---|
+| Sender name | `Black Crème` |
+| Sender email | `noreply@blackcreme.com` |
+| Host | `smtp.resend.com` |
+| Port | `465` |
+| Username | `resend` |
+| Password | Your Resend API key (`re_...`) |
+
+4. Click **Save**
+
+### Local Development
+Auth emails in local dev are caught by **Inbucket** — no real emails are sent.
+Access at: `http://localhost:54324`
+
+---
+
+## 8. Environment Variables
 
 ### Frontend (.env.local)
 ```
@@ -386,12 +419,13 @@ Set in **Supabase → Edge Functions → Manage Secrets**:
 STRIPE_SECRET_KEY=sk_test_... (or sk_live_... for production)
 STRIPE_WEBHOOK_SECRET=whsec_...
 RESEND_API_KEY=re_...
-RESEND_FROM_EMAIL=Black Crème <orders@blackcreme.com>
+RESEND_FROM_EMAIL=Black Crème <noreply@blackcreme.com>
+ADMIN_EMAIL=your@email.com
 ```
 
 ---
 
-## 8. Going Live Checklist
+## 9. Going Live Checklist
 
 ### Step 1 — Complete Stripe KYC Verification
 - Submit IC number, full name, date of birth
@@ -487,8 +521,8 @@ Access at: `https://www.blackcreme.com/admin`
 | Banners | Manage homepage carousel (images/videos) |
 | Products | Add/edit/delete products, manage stock |
 | Categories | Manage product categories |
-| Orders | View orders, update status, delete orders |
-| Settings | Toggle payment method (WhatsApp/Stripe) and customer login |
+| Orders | View orders, update status, delete orders. Each card shows customer name, order ref, scheduled date/time, delivery type, and order created datetime |
+| Settings | Toggle payment method (WhatsApp/Stripe), customer login, and customer sign up |
 
 ---
 

@@ -50,7 +50,7 @@ src/
   hooks/
     useCart.ts                     # Cart state (add, remove, update quantity)
     useAuth.ts                     # Auth state (session, user, sign in/out)
-    useSettings.ts                 # Site settings from site_settings table (payment_method, login_enabled)
+    useSettings.ts                 # Site settings from site_settings table (payment_method, login_enabled, signup_enabled)
   features/order/hooks/
     useDeliveryFee.ts              # Delivery fee + zone lookup by postcode
   data/
@@ -65,7 +65,7 @@ supabase/
   functions/
     create-order/index.ts          # Edge fn: save order to DB + create Stripe Checkout session
     stripe-webhook/index.ts        # Edge fn: handle Stripe webhook → mark paid + send email
-    send-order-email/index.ts      # Edge fn: send order confirmation email via Resend
+    send-order-email/index.ts      # Edge fn: send order confirmation email to customer via Resend + admin notification to ADMIN_EMAIL
 ```
 
 ---
@@ -94,9 +94,11 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 
 **Supabase Edge Function Secrets** (set via Supabase Dashboard → Edge Functions → Manage Secrets):
 ```
-STRIPE_SECRET_KEY=sk_test_...       # ✅ added
-RESEND_API_KEY=re_...               # ✅ added
-STRIPE_WEBHOOK_SECRET=whsec_...     # ⏳ add after Edge Functions deployed
+STRIPE_SECRET_KEY=sk_test_...       # or sk_live_... for production
+RESEND_API_KEY=re_...
+RESEND_FROM_EMAIL=Black Crème <noreply@yourdomain.com>   # requires verified domain in Resend
+STRIPE_WEBHOOK_SECRET=whsec_...     # add after webhook created in Stripe Dashboard
+ADMIN_EMAIL=your@email.com          # receives new order notification emails
 ```
 > `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_URL` are auto-injected by Supabase into every Edge Function — do NOT add them manually (reserved prefix).
 
@@ -223,6 +225,7 @@ Admin-controlled feature toggles. Managed via Admin Panel → Settings tab.
 **Keys:**
 - `payment_method` — `'whatsapp'` or `'stripe'`
 - `login_enabled` — `'true'` or `'false'`
+- `signup_enabled` — `'true'` or `'false'` — when `'false'`, `/register` shows a "Registration Closed" screen and LoginPage hides the "Create Account" link
 
 ---
 
@@ -244,6 +247,8 @@ Both buckets are **public**. Images are stored here, URLs are saved in the datab
 - **Admin:** Single user created manually in Supabase Dashboard → Authentication → Users. Login at `/admin`.
 - **Customers:** Sign up / sign in via Supabase Auth (email + password). Profile row auto-created via DB trigger on `auth.users` insert.
 - Login via `supabase.auth.signInWithPassword({ email, password })`
+- Sign-up can be disabled via `signup_enabled` setting without affecting existing logins.
+- Supabase Auth emails (reset password, verification) are sent via Resend custom SMTP — configured in Supabase Dashboard → Project Settings → Authentication → SMTP Settings.
 
 ---
 
@@ -261,7 +266,9 @@ Both buckets are **public**. Images are stored here, URLs are saved in the datab
    - Verifies Stripe signature
    - Updates order status = 'paid', sets paid_at
    - Calls send-order-email Edge Function
-6. send-order-email sends HTML invoice email via Resend to customer_email
+6. send-order-email sends two emails via Resend:
+   - Customer invoice (styled HTML) to customer_email
+   - Admin new-order notification to ADMIN_EMAIL (if secret is set)
 7. Customer is redirected to /order-success?orderId=xxx (Stripe success_url)
 ```
 
@@ -275,13 +282,15 @@ Both buckets are **public**. Images are stored here, URLs are saved in the datab
 
 ## Admin Panel (`/admin`)
 
-Three tabs, all with drag-and-drop ordering:
+Five tabs:
 
-- **Banners** — add/edit/delete carousel banners (images or YouTube/mp4 video). Add banner form sets `display_order` to last position. Edit allows replacing the image (old image auto-deleted from storage).
-- **Products** — filtered by category tabs. Add/edit/delete products with image upload, stock qty, pricing. `is_available` is auto-set based on `stock_qty > 0`.
-- **Categories** — add/delete categories. Delete is blocked if products are still assigned to it.
+- **Banners** — add/edit/delete carousel banners (images or YouTube/mp4 video). Add banner form sets `display_order` to last position. Edit allows replacing the image (old image auto-deleted from storage). Drag-and-drop reorder.
+- **Products** — filtered by category tabs. Add/edit/delete products with image upload, stock qty, pricing. `is_available` is auto-set based on `stock_qty > 0`. Drag-and-drop reorder.
+- **Categories** — add/delete categories. Delete is blocked if products are still assigned to it. Drag-and-drop reorder.
+- **Orders** — view all orders, filterable by status. Each card shows customer name, order ref, scheduled date/time, delivery type, and order created datetime. Expand card for full details. Update status via dropdown. Delete order.
+- **Settings** — feature toggles: payment method (WhatsApp/Stripe), customer login, customer sign up.
 
-Drag-and-drop reorder shows a **Save Order** bar — must click Save to persist. Uses `@dnd-kit`.
+Drag-and-drop reorder (Banners/Products/Categories) shows a **Save Order** bar — must click Save to persist. Uses `@dnd-kit`.
 
 ---
 
