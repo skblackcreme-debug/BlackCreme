@@ -10,8 +10,10 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  category: Category;
-  image?: string;
+  category: string;
+  image_url?: string;
+  is_available: boolean;
+  stock_qty: number;
 }
 
 export interface CartItem extends Product {

@@ -1,13 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -18,12 +8,21 @@ import {
   Minus,
   Trash2,
   ChevronRight,
+  ChevronDown,
   MessageCircle,
+  CreditCard,
+  User,
+  ClipboardList,
+  LogOut,
 } from 'lucide-react';
-import { PRODUCTS, WHATSAPP_NUMBER } from './constants';
-import { Category, Product } from './types';
+import { WHATSAPP_NUMBER } from './constants';
+import { Product } from './types';
+import { supabase } from './lib/supabase';
+import { useAuth } from './hooks/useAuth';
+import { useSettings } from './hooks/useSettings';
 import { useCart } from './hooks/useCart';
 import { useDeliveryFee } from './features/order/hooks/useDeliveryFee';
+import BannerCarousel from './components/BannerCarousel';
 import { POSTCODE_LOOKUP, STATE_CITIES, SUPPORTED_STATES, isServiceablePostcode } from './data/deliveryZones';
 
 const TIME_SLOTS = [
@@ -37,9 +36,15 @@ const TIME_SLOTS = [
 
 export default function App() {
   const { cart, addToCart, removeFromCart, updateQuantity, totalItems, totalPrice } = useCart();
-  const [activeCategory, setActiveCategory] = useState<Category>(Category.BASQUE);
+  const { user, profile, loading: authLoading, signOut } = useAuth();
+  const { settings } = useSettings();
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [activeCategory, setActiveCategory] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showOrderForm, setShowOrderForm] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [orderForm, setOrderForm] = useState({
     name: '',
     phone: '',
@@ -52,9 +57,44 @@ export default function App() {
     date: '',
     time: '',
     cakeMessage: '',
+    email: '',
   });
 
-  const filteredProducts = PRODUCTS.filter(p => p.category === activeCategory);
+  // Pre-fill name & phone from profile when order form opens
+  useEffect(() => {
+    if (showOrderForm && profile) {
+      setOrderForm(f => ({
+        ...f,
+        name: f.name || profile.full_name || '',
+        phone: f.phone || profile.phone || '',
+        email: f.email || user?.email || '',
+      }));
+    }
+  }, [showOrderForm, profile]);
+
+  // Fetch saved addresses for logged-in users
+  useEffect(() => {
+    if (authLoading || !user) return;
+    supabase.from('addresses').select('*').eq('user_id', user.id).order('is_default', { ascending: false })
+      .then(({ data }) => setSavedAddresses(data ?? []));
+  }, [user, authLoading]);
+
+  const CATEGORY_ORDER = ['Basque Cake', 'Tiramisu Cake', 'Party Size', 'Add-ons'];
+
+  useEffect(() => {
+    supabase.from('products').select('*').order('display_order').then(({ data }) => {
+      const fetched = data ?? [];
+      setProducts(fetched);
+      const unique = [...new Set(fetched.map((p: Product) => p.category))];
+      const sorted = CATEGORY_ORDER.filter(c => unique.includes(c));
+      const others = unique.filter((c: string) => !CATEGORY_ORDER.includes(c));
+      const all = [...sorted, ...others];
+      setCategories(all);
+      if (all.length > 0) setActiveCategory(all[0]);
+    });
+  }, []);
+
+  const filteredProducts = products.filter(p => p.category === activeCategory);
 
   const { fee: deliveryFee, zoneLabel, estimatedTime, isServiceable, isLoading: feeLoading } =
     useDeliveryFee(orderForm.postcode, orderForm.deliveryType);
@@ -66,6 +106,41 @@ export default function App() {
     } else {
       setOrderForm(f => ({ ...f, postcode }));
     }
+  };
+
+  const saveOrderToDB = async (form: typeof orderForm) => {
+    if (!user) return;
+    const fee = form.deliveryType === 'pickup' ? 0 : deliveryFee;
+    const { data: order } = await supabase.from('orders').insert({
+      user_id: user.id,
+      delivery_type: form.deliveryType,
+      subtotal: totalPrice,
+      delivery_fee: fee,
+      discount_amount: 0,
+      total: totalPrice + fee,
+      cake_message: form.cakeMessage || null,
+      scheduled_date: form.date,
+      scheduled_time: form.time,
+      status: 'pending',
+      customer_name: form.name,
+      customer_phone: form.phone,
+      customer_email: user.email ?? null,
+      delivery_address_line_1: form.addressLine1 || null,
+      delivery_address_line_2: form.addressLine2 || null,
+      delivery_city: form.city || null,
+      delivery_state: form.state || null,
+      delivery_postcode: form.postcode || null,
+    }).select().single();
+    if (!order) return;
+    await supabase.from('order_items').insert(
+      cart.map(item => ({
+        order_id: order.id,
+        product_id: item.id,
+        product_name: item.name,
+        product_price: item.price,
+        quantity: item.quantity,
+      }))
+    );
   };
 
   const generateWhatsAppLink = (form: typeof orderForm) => {
@@ -102,6 +177,47 @@ export default function App() {
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
   };
 
+  const handleStripeCheckout = async (form: typeof orderForm) => {
+    setStripeLoading(true);
+    try {
+      const fee = form.deliveryType === 'pickup' ? 0 : deliveryFee;
+      const { data, error } = await supabase.functions.invoke('create-order', {
+        body: {
+          customer_name: form.name,
+          customer_email: form.email || user?.email,
+          customer_phone: form.phone,
+          delivery_type: form.deliveryType,
+          delivery_address_line_1: form.addressLine1 || null,
+          delivery_address_line_2: form.addressLine2 || null,
+          delivery_city: form.city || null,
+          delivery_state: form.state || null,
+          delivery_postcode: form.postcode || null,
+          scheduled_date: form.date,
+          scheduled_time: form.time,
+          cake_message: form.cakeMessage || null,
+          subtotal: totalPrice,
+          delivery_fee: fee,
+          total: totalPrice + fee,
+          user_id: (user && profile) ? user.id : null,
+          items: cart.map(item => ({
+            product_id: item.id,
+            product_name: item.name,
+            product_price: item.price,
+            quantity: item.quantity,
+            subtotal: item.price * item.quantity,
+          })),
+          origin: window.location.origin,
+        },
+      });
+      if (error) throw error;
+      if (data?.checkoutUrl) window.location.href = data.checkoutUrl;
+    } catch {
+      alert('Payment setup failed. Please try again or contact us via WhatsApp.');
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Navigation */}
@@ -119,7 +235,8 @@ export default function App() {
             <a href="#contact" className="text-sm font-medium hover:text-accent-caramel transition-colors">Contact</a>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
+            {/* Cart */}
             <a href="#order" className="relative p-2 text-primary-dark hover:text-accent-caramel transition-colors" id="cart-badge">
               <ShoppingBag className="w-6 h-6" />
               {totalItems > 0 && (
@@ -128,6 +245,23 @@ export default function App() {
                 </span>
               )}
             </a>
+
+            {/* Auth */}
+            {!authLoading && (
+              (user && profile) ? (
+                <div className="hidden md:block relative">
+                  <UserDropdown name={profile.full_name?.split(' ')[0] ?? 'Account'} onSignOut={signOut} />
+                </div>
+              ) : settings.login_enabled ? (
+                <a
+                  href="/login"
+                  className="hidden md:block text-[10px] uppercase tracking-widest font-bold text-primary-dark hover:text-accent-caramel transition-colors"
+                >
+                  Sign In
+                </a>
+              ) : null
+            )}
+
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="md:hidden p-2"
@@ -153,13 +287,32 @@ export default function App() {
               <a href="#menu" onClick={() => setIsMenuOpen(false)} className="text-2xl font-serif">Menu</a>
               <a href="#order" onClick={() => setIsMenuOpen(false)} className="text-2xl font-serif">Order</a>
               <a href="#contact" onClick={() => setIsMenuOpen(false)} className="text-2xl font-serif">Contact</a>
+              {!authLoading && ((user && profile) || settings.login_enabled) && (
+                <div className="border-t border-primary-dark/10 pt-4">
+                  {(user && profile) ? (
+                    <>
+                      <a href="/profile" onClick={() => setIsMenuOpen(false)} className="text-sm font-semibold text-primary-dark">My Account</a>
+                      <button onClick={signOut} className="text-sm text-red-400 mt-2 block w-full">Sign Out</button>
+                    </>
+                  ) : (
+                    <a href="/login" onClick={() => setIsMenuOpen(false)} className="text-sm font-semibold text-accent-caramel">Sign In / Register</a>
+                  )}
+                </div>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Banner Carousel */}
+      <div className="pt-16 bg-primary-cream">
+        <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
+          <BannerCarousel />
+        </div>
+      </div>
+
       {/* Hero Section */}
-      <section id="hero" className="relative h-[90vh] flex items-center justify-center pt-16 bg-primary-cream">
+      <section id="hero" className="relative h-[60vh] flex items-center justify-center bg-primary-cream">
         <div className="relative z-10 text-center px-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -208,7 +361,7 @@ export default function App() {
             
             {/* Category Tabs */}
             <div className="flex space-x-6 mt-10 border-b border-primary-dark/10 overflow-x-auto whitespace-nowrap scrollbar-hide">
-              {[Category.BASQUE, Category.TIRAMISU, Category.PARTY_SIZE, Category.ADDONS].map((cat) => (
+              {categories.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
@@ -276,12 +429,20 @@ export default function App() {
 
             <button
               onClick={() => { if (cart.length > 0) setShowOrderForm(true); }}
-              className="whatsapp-btn flex items-center justify-center gap-3 transition-transform active:scale-[0.98]"
+              className={`flex items-center justify-center gap-3 transition-transform active:scale-[0.98] ${
+                settings.payment_method === 'stripe'
+                  ? 'w-full py-4 bg-primary-dark hover:bg-accent-caramel text-white rounded-full font-semibold tracking-widest uppercase text-xs shadow-lg'
+                  : 'whatsapp-btn'
+              }`}
             >
-              <MessageCircle className="w-5 h-5" />
-              Place Order
+              {settings.payment_method === 'stripe'
+                ? <><CreditCard className="w-5 h-5" /> Place Order</>
+                : <><MessageCircle className="w-5 h-5" /> Place Order</>
+              }
             </button>
-            <p className="mt-4 text-center text-[9px] opacity-40 uppercase tracking-[2px]">Secured via WhatsApp Chat</p>
+            <p className="mt-4 text-center text-[9px] opacity-40 uppercase tracking-[2px]">
+              {settings.payment_method === 'stripe' ? 'Secured via Stripe Payment' : 'Secured via WhatsApp Chat'}
+            </p>
           </div>
         </aside>
       </div>
@@ -334,6 +495,18 @@ export default function App() {
                     className="w-full border border-primary-dark/15 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent-caramel" />
                 </div>
 
+                {/* Email — required for Stripe (guests + admin testing) */}
+                {settings.payment_method === 'stripe' && !profile && (
+                  <div>
+                    <label className="text-[10px] uppercase tracking-widest font-bold opacity-50 block mb-1">
+                      Email * <span className="normal-case font-normal opacity-60">(for order confirmation)</span>
+                    </label>
+                    <input type="email" placeholder="e.g. sarah@email.com" value={orderForm.email}
+                      onChange={(e) => setOrderForm({ ...orderForm, email: e.target.value })}
+                      className="w-full border border-primary-dark/15 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent-caramel" />
+                  </div>
+                )}
+
                 {/* Delivery type toggle */}
                 <div>
                   <label className="text-[10px] uppercase tracking-widest font-bold opacity-50 block mb-2">Delivery Method</label>
@@ -355,6 +528,36 @@ export default function App() {
                 {/* Address fields — only for delivery */}
                 {orderForm.deliveryType === 'delivery' && (
                   <>
+                    {/* Saved address selector for logged-in users */}
+                    {user && savedAddresses.length > 0 && (
+                      <div>
+                        <label className="text-[10px] uppercase tracking-widest font-bold opacity-50 block mb-1">Saved Addresses</label>
+                        <select
+                          onChange={(e) => {
+                            const addr = savedAddresses.find(a => a.id === e.target.value);
+                            if (!addr) return;
+                            setOrderForm(f => ({
+                              ...f,
+                              addressLine1: addr.address_line_1,
+                              addressLine2: addr.address_line_2 ?? '',
+                              postcode: addr.postcode,
+                              city: addr.city,
+                              state: addr.state,
+                            }));
+                          }}
+                          className="w-full border border-primary-dark/15 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-accent-caramel bg-white"
+                        >
+                          <option value="">— Choose a saved address —</option>
+                          {savedAddresses.map(a => (
+                            <option key={a.id} value={a.id}>
+                              {a.label ? `${a.label} — ` : ''}{a.address_line_1}, {a.city}
+                              {a.is_default ? ' (Default)' : ''}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
                     {/* Address Line 1 */}
                     <div>
                       <label className="text-[10px] uppercase tracking-widest font-bold opacity-50 block mb-1">Address Line 1 *</label>
@@ -511,23 +714,41 @@ export default function App() {
                   className="flex-1 py-3 border border-primary-dark/20 text-primary-dark text-xs uppercase tracking-widest font-bold rounded-xl hover:bg-primary-cream transition-all">
                   Back
                 </button>
-                <button
-                  onClick={() => {
-                    const deliveryIncomplete = orderForm.deliveryType === 'delivery' &&
-                      (!orderForm.addressLine1 || !orderForm.postcode || !isServiceable || feeLoading);
-                    if (!orderForm.name || !orderForm.phone || !orderForm.date || deliveryIncomplete) return;
-                    window.open(generateWhatsAppLink(orderForm), '_blank');
-                    setShowOrderForm(false);
-                  }}
-                  disabled={
-                    !orderForm.name || !orderForm.phone || !orderForm.date ||
-                    (orderForm.deliveryType === 'delivery' &&
-                      (!orderForm.addressLine1 || !orderForm.postcode || !isServiceable || feeLoading))
-                  }
-                  className="flex-[2] py-3 bg-[#25D366] disabled:opacity-40 text-white text-xs uppercase tracking-widest font-bold rounded-xl hover:bg-[#1ebe5d] transition-all flex items-center justify-center gap-2">
-                  <MessageCircle className="w-4 h-4" />
-                  Confirm & Send
-                </button>
+                {settings.payment_method === 'stripe' ? (
+                  <button
+                    onClick={() => handleStripeCheckout(orderForm)}
+                    disabled={
+                      stripeLoading ||
+                      !orderForm.name || !orderForm.phone || !orderForm.date ||
+                      (!profile && !orderForm.email) ||
+                      (orderForm.deliveryType === 'delivery' &&
+                        (!orderForm.addressLine1 || !orderForm.postcode || !isServiceable || feeLoading))
+                    }
+                    className="flex-[2] py-3 bg-primary-dark disabled:opacity-40 text-white text-xs uppercase tracking-widest font-bold rounded-xl hover:bg-accent-caramel transition-all flex items-center justify-center gap-2"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    {stripeLoading ? 'Redirecting…' : 'Pay with Stripe'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      const deliveryIncomplete = orderForm.deliveryType === 'delivery' &&
+                        (!orderForm.addressLine1 || !orderForm.postcode || !isServiceable || feeLoading);
+                      if (!orderForm.name || !orderForm.phone || !orderForm.date || deliveryIncomplete) return;
+                      window.open(generateWhatsAppLink(orderForm), '_blank');
+                      setShowOrderForm(false);
+                    }}
+                    disabled={
+                      !orderForm.name || !orderForm.phone || !orderForm.date ||
+                      (orderForm.deliveryType === 'delivery' &&
+                        (!orderForm.addressLine1 || !orderForm.postcode || !isServiceable || feeLoading))
+                    }
+                    className="flex-[2] py-3 bg-[#25D366] disabled:opacity-40 text-white text-xs uppercase tracking-widest font-bold rounded-xl hover:bg-[#1ebe5d] transition-all flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Confirm & Send
+                  </button>
+                )}
               </div>
             </motion.div>
           </motion.div>
@@ -592,6 +813,55 @@ interface PostcodeComboboxProps {
   onChange: (postcode: string) => void;
   filterState: string;
   filterCity: string;
+}
+
+// ─── User Dropdown ────────────────────────────────────────────────────────────
+
+function UserDropdown({ name, onSignOut }: { name: string; onSignOut: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 text-xs font-medium text-primary-dark/70 hover:text-accent-caramel transition-colors"
+      >
+        Hi, {name}
+        <ChevronDown className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-xl shadow-xl border border-primary-dark/5 overflow-hidden z-50">
+          <a href="/profile" onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-primary-cream transition-colors">
+            <User className="w-4 h-4 text-gray-400" />
+            My Profile
+          </a>
+          <a href="/orders" onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-primary-cream transition-colors border-t border-primary-dark/5">
+            <ClipboardList className="w-4 h-4 text-gray-400" />
+            My Orders
+          </a>
+          <button
+            onClick={() => { setOpen(false); onSignOut(); }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-50 transition-colors border-t border-primary-dark/5"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function PostcodeCombobox({ value, onChange, filterState, filterCity }: PostcodeComboboxProps) {
@@ -677,6 +947,7 @@ interface ProductCardProps {
 
 function ProductCard({ product, onAdd }: ProductCardProps) {
   const [qty, setQty] = useState(1);
+  const inStock = product.is_available && product.stock_qty > 0;
 
   return (
     <motion.div
@@ -686,10 +957,10 @@ function ProductCard({ product, onAdd }: ProductCardProps) {
       className="product-card flex flex-col h-full group"
     >
       <div className="relative aspect-square mb-6 overflow-hidden bg-primary-cream rounded-lg group">
-        {product.image ? (
+        {product.image_url ? (
           <>
             <img
-              src={product.image}
+              src={product.image_url}
               alt={product.name}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               referrerPolicy="no-referrer"
@@ -709,22 +980,30 @@ function ProductCard({ product, onAdd }: ProductCardProps) {
           <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center border-2 border-primary-dark/5 bg-primary-cream/50">
             <span className="font-logo text-accent-caramel text-2xl opacity-40 mb-2">BC</span>
             <span className="font-serif italic text-primary-dark/40 text-sm">{product.name}</span>
-            <span className="text-[8px] uppercase tracking-[2px] text-gray-soft opacity-30 mt-4 italic">Add-on</span>
+            <span className="text-[8px] uppercase tracking-[2px] text-gray-soft opacity-30 mt-4 italic">Artisanal Bake</span>
           </div>
         )}
-        <div className="absolute inset-0 bg-primary-dark/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        {!inStock && (
+          <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+            <span className="text-[10px] uppercase tracking-widest font-bold text-red-400 border border-red-300 px-3 py-1 rounded-full">Out of Stock</span>
+          </div>
+        )}
+        {inStock && (
+          <div className="absolute inset-0 bg-primary-dark/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <span className="font-serif italic text-white text-lg">{product.name.split(' ')[0]}</span>
-        </div>
+          </div>
+        )}
       </div>
       <div className="flex flex-col flex-1">
         <div className="code-badge">{product.category}</div>
         <h3 className="text-lg mb-2 font-semibold leading-tight group-hover:text-accent-caramel transition-colors">{product.name}</h3>
         <p className="text-[11px] text-gray-soft mb-6 leading-relaxed flex-1 line-clamp-2">{product.description}</p>
-        
+
         <div className="flex items-center justify-between mt-auto">
           <span className="font-serif text-lg">RM {product.price.toFixed(2)}</span>
-          <div className="flex items-center space-x-3">
-             <div className="flex items-center gap-2 border border-primary-dark/10 rounded-full px-2 py-0.5">
+          {inStock && (
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-2 border border-primary-dark/10 rounded-full px-2 py-0.5">
                 <button
                   onClick={() => setQty(Math.max(1, qty - 1))}
                   className="w-5 h-5 flex items-center justify-center hover:text-accent-caramel transition-colors"
@@ -733,23 +1012,22 @@ function ProductCard({ product, onAdd }: ProductCardProps) {
                 </button>
                 <span className="text-xs font-bold w-4 text-center">{qty}</span>
                 <button
-                  onClick={() => setQty(qty + 1)}
+                  onClick={() => setQty(Math.min(product.stock_qty, qty + 1))}
                   className="w-5 h-5 flex items-center justify-center hover:text-accent-caramel transition-colors"
                 >
                   <Plus className="w-3 h-3" />
                 </button>
-             </div>
-          </div>
+              </div>
+            </div>
+          )}
         </div>
-        
+
         <button
-          onClick={() => {
-            onAdd(product, qty);
-            setQty(1);
-          }}
-          className="w-full mt-6 py-4 border border-primary-dark text-primary-dark text-[10px] uppercase tracking-widest font-bold rounded-lg hover:bg-primary-dark hover:text-white transition-all transform active:scale-95"
+          disabled={!inStock}
+          onClick={() => { onAdd(product, qty); setQty(1); }}
+          className="w-full mt-6 py-4 border border-primary-dark text-primary-dark text-[10px] uppercase tracking-widest font-bold rounded-lg hover:bg-primary-dark hover:text-white transition-all transform active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-primary-dark"
         >
-          Add to Order
+          {inStock ? 'Add to Order' : 'Out of Stock'}
         </button>
       </div>
     </motion.div>
