@@ -845,7 +845,7 @@ export default function App() {
 
       {/* Floating WhatsApp Button */}
       <a
-        href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi! I would like to have some enquiries on the cake. 🎂')}`}
+        href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi Black Crème! I would like to have some enquiries on the cake. 🎂')}`}
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white rounded-full shadow-lg transition-all duration-300 hover:scale-105 group"
