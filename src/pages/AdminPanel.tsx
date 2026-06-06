@@ -35,6 +35,13 @@ interface Banner {
   is_active: boolean;
 }
 
+interface HeroSlide {
+  id: string;
+  image_url: string;
+  display_order: number;
+  is_active: boolean;
+}
+
 interface Product {
   id: string;
   name: string;
@@ -53,7 +60,7 @@ interface Category {
   display_order: number;
 }
 
-type Tab = 'banners' | 'products' | 'categories' | 'orders' | 'settings';
+type Tab = 'hero' | 'banners' | 'products' | 'categories' | 'orders' | 'settings';
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
@@ -116,7 +123,16 @@ function SaveOrderBar({ changed, saving, onSave }: { changed: boolean; saving: b
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function AdminPanel() {
-  const [tab, setTab] = useState<Tab>('banners');
+  const [tab, setTab] = useState<Tab>('hero');
+
+  const TAB_LABELS: Record<Tab, string> = {
+    hero: 'Hero',
+    banners: 'Banners',
+    products: 'Products',
+    categories: 'Categories',
+    orders: 'Orders',
+    settings: 'Settings',
+  };
 
   return (
     <div className="min-h-screen bg-primary-cream">
@@ -133,21 +149,22 @@ export default function AdminPanel() {
         </button>
       </header>
 
-      <div className="flex border-b border-primary-dark/10 bg-white px-6">
-        {(['banners', 'products', 'categories', 'orders', 'settings'] as Tab[]).map((t) => (
+      <div className="flex border-b border-primary-dark/10 bg-white px-6 overflow-x-auto">
+        {(['hero', 'banners', 'products', 'categories', 'orders', 'settings'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`py-3 px-6 text-[10px] uppercase tracking-widest font-bold transition-all border-b-2 ${
+            className={`py-3 px-5 text-[10px] uppercase tracking-widest font-bold transition-all border-b-2 whitespace-nowrap ${
               tab === t ? 'border-accent-caramel text-primary-dark' : 'border-transparent text-gray-400 hover:text-primary-dark'
             }`}
           >
-            {t}
+            {TAB_LABELS[t]}
           </button>
         ))}
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
+        {tab === 'hero'       && <HeroSlidesTab />}
         {tab === 'banners'    && <BannersTab />}
         {tab === 'products'   && <ProductsTab />}
         {tab === 'categories' && <CategoriesTab />}
@@ -155,6 +172,217 @@ export default function AdminPanel() {
         {tab === 'settings'   && <SettingsTab />}
       </div>
     </div>
+  );
+}
+
+// ─── Hero Slides Tab ──────────────────────────────────────────────────────────
+
+function HeroSlidesTab() {
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [orderChanged, setOrderChanged] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const fetchSlides = async () => {
+    const { data } = await supabase.from('hero_slides').select('*').order('display_order');
+    setSlides(data ?? []);
+    setLoading(false);
+    setOrderChanged(false);
+  };
+
+  useEffect(() => { fetchSlides(); }, []);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setSlides(prev => {
+      const oldIndex = prev.findIndex(s => s.id === active.id);
+      const newIndex = prev.findIndex(s => s.id === over.id);
+      return arrayMove(prev, oldIndex, newIndex);
+    });
+    setOrderChanged(true);
+  };
+
+  const saveOrder = async () => {
+    setSaving(true);
+    await Promise.all(slides.map((s, i) =>
+      supabase.from('hero_slides').update({ display_order: i }).eq('id', s.id)
+    ));
+    setSaving(false);
+    setOrderChanged(false);
+  };
+
+  const toggleActive = async (id: string, current: boolean) => {
+    await supabase.from('hero_slides').update({ is_active: !current }).eq('id', id);
+    fetchSlides();
+  };
+
+  const deleteSlide = async (id: string, imageUrl: string) => {
+    if (!confirm('Delete this slide?')) return;
+    const path = imageUrl.split('/hero/')[1];
+    if (path) await supabase.storage.from('hero').remove([path]);
+    await supabase.from('hero_slides').delete().eq('id', id);
+    fetchSlides();
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <h2 className="text-xl font-serif">Hero Slides</h2>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">Product images shown in the homepage hero section</p>
+        </div>
+        <button
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-dark text-white text-[10px] uppercase tracking-widest font-bold rounded-lg hover:bg-accent-caramel transition-all"
+        >
+          <Plus className="w-4 h-4" /> Add Slide
+        </button>
+      </div>
+
+      <p className="text-[11px] text-gray-400 mb-4">
+        Recommended: <strong>3:4 portrait</strong> images (e.g. 900 × 1200 px). Auto-advances every 4 seconds.
+      </p>
+
+      <SaveOrderBar changed={orderChanged} saving={saving} onSave={saveOrder} />
+
+      {loading ? (
+        <p className="text-sm text-gray-400">Loading…</p>
+      ) : slides.length === 0 ? (
+        <div className="bg-white rounded-xl p-6 text-center text-sm text-gray-400 italic shadow-sm">
+          No slides yet — the default hero image will be shown.
+        </div>
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={slides.map(s => s.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-3">
+              {slides.map((s) => (
+                <SortableRow key={s.id} id={s.id}>
+                  <img src={s.image_url} alt="Hero slide" className="w-12 h-16 object-cover rounded-lg shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-primary-dark font-medium">Product Slide</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-widest">Image</p>
+                  </div>
+                  <div
+                    onClick={() => toggleActive(s.id, s.is_active)}
+                    className={`w-10 h-5 rounded-full transition-all relative cursor-pointer shrink-0 ${s.is_active ? 'bg-green-400' : 'bg-gray-200'}`}
+                  >
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${s.is_active ? 'left-5' : 'left-0.5'}`} />
+                  </div>
+                  <span className="text-[10px] uppercase tracking-widest text-gray-400 shrink-0 hidden sm:block">
+                    {s.is_active ? 'Active' : 'Hidden'}
+                  </span>
+                  <button onClick={() => deleteSlide(s.id, s.image_url)} className="text-red-400 hover:text-red-600 transition-colors shrink-0">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </SortableRow>
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
+
+      {showForm && (
+        <Modal onClose={() => setShowForm(false)}>
+          <HeroSlideForm
+            nextOrder={slides.length}
+            onDone={() => { setShowForm(false); fetchSlides(); }}
+            onCancel={() => setShowForm(false)}
+          />
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ─── Hero Slide Form ──────────────────────────────────────────────────────────
+
+function HeroSlideForm({ nextOrder, onDone, onCancel }: {
+  nextOrder: number;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFile(f);
+    setPreview(URL.createObjectURL(f));
+  };
+
+  const handleSubmit = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    if (!file) return;
+    setUploading(true);
+    const ext = file.name.split('.').pop();
+    const path = `${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('hero').upload(path, file);
+    if (error) { alert('Upload failed: ' + error.message); setUploading(false); return; }
+    const imageUrl = supabase.storage.from('hero').getPublicUrl(path).data.publicUrl;
+    await supabase.from('hero_slides').insert({ image_url: imageUrl, display_order: nextOrder, is_active: true });
+    setUploading(false);
+    onDone();
+  };
+
+  return (
+    <>
+      <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+        <div>
+          <h3 className="font-serif text-xl">New Hero Slide</h3>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">Product image for homepage hero</p>
+        </div>
+        <button onClick={onCancel}><X className="w-5 h-5 text-gray-400" /></button>
+      </div>
+      <div className="overflow-y-auto flex-1 p-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-[10px] uppercase tracking-widest font-bold opacity-50 block mb-1">
+              Image <span className="normal-case font-normal opacity-60">(3:4 portrait — e.g. 900 × 1200px)</span>
+            </label>
+            <div
+              onClick={() => fileRef.current?.click()}
+              className="border-2 border-dashed border-primary-dark/15 rounded-xl p-6 text-center cursor-pointer hover:border-accent-caramel transition-colors"
+            >
+              {preview ? (
+                <img src={preview} className="max-h-56 mx-auto rounded-lg object-contain" />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-gray-400">
+                  <Upload className="w-8 h-8 opacity-40" />
+                  <p className="text-sm">Click to upload image</p>
+                  <p className="text-[10px] opacity-60">Best size: 900 × 1200 px</p>
+                </div>
+              )}
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onCancel}
+              className="flex-1 py-3 border border-primary-dark/20 text-primary-dark text-xs uppercase tracking-widest font-bold rounded-xl hover:bg-primary-cream transition-all">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!file || uploading}
+              className="flex-[2] py-3 bg-primary-dark disabled:opacity-40 text-white text-xs uppercase tracking-widest font-bold rounded-xl hover:bg-accent-caramel transition-all flex items-center justify-center gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              {uploading ? 'Uploading…' : 'Add Slide'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }
 
@@ -871,6 +1099,7 @@ function SettingsTab() {
   const loginEnabled = settings.login_enabled !== 'false';
   const signupEnabled = settings.signup_enabled !== 'false';
   const paymentMethod = settings.payment_method ?? 'whatsapp';
+  const quickOrder = settings.whatsapp_quick_order === 'true';
 
   return (
     <div>
@@ -958,6 +1187,30 @@ function SettingsTab() {
             </p>
           )}
         </div>
+
+        {/* Quick WhatsApp Order — only shown when payment method is WhatsApp */}
+        {paymentMethod === 'whatsapp' && (
+          <div className="bg-white rounded-xl p-5 shadow-sm flex items-center justify-between gap-6">
+            <div>
+              <p className="font-medium text-sm">Quick WhatsApp Order</p>
+              <p className="text-[11px] text-gray-400 mt-1 max-w-sm">
+                When on, customers are sent directly to WhatsApp with their cart — no form to fill in. You collect their details through the chat.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[10px] uppercase tracking-widest text-gray-400 w-12 text-right">
+                {quickOrder ? 'On' : 'Off'}
+              </span>
+              <button
+                onClick={() => updateSetting('whatsapp_quick_order', quickOrder ? 'false' : 'true')}
+                disabled={saving === 'whatsapp_quick_order'}
+                className={`w-12 h-6 rounded-full transition-all relative disabled:opacity-50 ${quickOrder ? 'bg-green-400' : 'bg-gray-200'}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${quickOrder ? 'left-7' : 'left-1'}`} />
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

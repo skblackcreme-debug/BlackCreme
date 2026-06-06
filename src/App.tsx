@@ -21,6 +21,7 @@ import { supabase } from './lib/supabase';
 import { useAuth } from './hooks/useAuth';
 import { useSettings } from './hooks/useSettings';
 import { useCart } from './hooks/useCart';
+import { useHeroSlides } from './hooks/useHeroSlides';
 import { useDeliveryFee } from './features/order/hooks/useDeliveryFee';
 import BannerCarousel from './components/BannerCarousel';
 import { POSTCODE_LOOKUP, STATE_CITIES, SUPPORTED_STATES, isServiceablePostcode } from './data/deliveryZones';
@@ -38,6 +39,7 @@ export default function App() {
   const { cart, addToCart, removeFromCart, updateQuantity, totalItems, totalPrice } = useCart();
   const { user, profile, loading: authLoading, signOut } = useAuth();
   const { settings } = useSettings();
+  const heroSlides = useHeroSlides();
   const [stripeLoading, setStripeLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -177,6 +179,22 @@ export default function App() {
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
   };
 
+  const generateQuickWhatsAppLink = () => {
+    if (cart.length === 0) return '#';
+    const subtotal = totalPrice;
+    const itemsText = cart.map(i => `  • ${i.name} x${i.quantity} — RM${(i.price * i.quantity).toFixed(2)}`).join('\n');
+    const message = [
+      `🎂 NEW CAKE ORDER – Black Crème`,
+      `─────────────────────`,
+      `🛒 Order:`,
+      itemsText,
+      `─────────────────────`,
+      `💰 TOTAL : RM ${subtotal.toFixed(2)}`,
+      `─────────────────────`,
+    ].join('\n');
+    return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  };
+
   const handleStripeCheckout = async (form: typeof orderForm) => {
     setStripeLoading(true);
     try {
@@ -310,14 +328,32 @@ export default function App() {
         {/* Hero: product image + text */}
         <section className="relative overflow-hidden md:h-[70vh]">
 
-          {/* Desktop: product image */}
+          {/* Desktop: product slideshow */}
           <div className="hidden md:flex absolute right-0 top-0 bottom-0 items-center z-0">
-            <img
-              src="/hero-product.png"
-              alt="Black Crème Biscoff Velvet Tiramisu"
-              className="h-full w-auto"
-            />
-            <div className="absolute inset-y-0 left-0 w-48 bg-gradient-to-r from-[#EDE0D0] to-transparent" />
+            <div className="relative h-full">
+              <img
+                src={heroSlides.currentSrc}
+                alt="Black Crème"
+                className="h-full w-auto transition-opacity duration-300"
+                style={{ opacity: heroSlides.visible ? 1 : 0 }}
+              />
+              {heroSlides.slides.length > 1 && (
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                  {heroSlides.slides.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => heroSlides.goTo(i)}
+                      className={`rounded-full transition-all duration-300 ${
+                        i === heroSlides.index
+                          ? 'w-5 h-1.5 bg-primary-dark/60'
+                          : 'w-1.5 h-1.5 bg-primary-dark/25 hover:bg-primary-dark/45'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="absolute inset-y-0 left-0 w-48 bg-gradient-to-r from-[#EDE0D0] to-transparent pointer-events-none" />
           </div>
 
           {/* Text content */}
@@ -361,13 +397,29 @@ export default function App() {
             </div>
           </div>
 
-          {/* Mobile: image stacked below text */}
-          <div className="md:hidden h-72 w-full">
+          {/* Mobile: product slideshow stacked below text */}
+          <div className="md:hidden h-72 w-full relative overflow-hidden">
             <img
-              src="/hero-product.png"
-              alt="Black Crème Biscoff Velvet Tiramisu"
-              className="w-full h-full object-cover object-top"
+              src={heroSlides.currentSrc}
+              alt="Black Crème"
+              className="w-full h-full object-cover object-top transition-opacity duration-300"
+              style={{ opacity: heroSlides.visible ? 1 : 0 }}
             />
+            {heroSlides.slides.length > 1 && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                {heroSlides.slides.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => heroSlides.goTo(i)}
+                    className={`rounded-full transition-all duration-300 ${
+                      i === heroSlides.index
+                        ? 'w-5 h-1.5 bg-white/80'
+                        : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/65'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -457,7 +509,14 @@ export default function App() {
             </div>
 
             <button
-              onClick={() => { if (cart.length > 0) setShowOrderForm(true); }}
+              onClick={() => {
+                if (cart.length === 0) return;
+                if (settings.payment_method === 'whatsapp' && settings.whatsapp_quick_order) {
+                  window.open(generateQuickWhatsAppLink(), '_blank');
+                } else {
+                  setShowOrderForm(true);
+                }
+              }}
               className={`flex items-center justify-center gap-3 transition-transform active:scale-[0.98] ${
                 settings.payment_method === 'stripe'
                   ? 'w-full py-4 bg-primary-dark hover:bg-accent-caramel text-white rounded-full font-semibold tracking-widest uppercase text-xs shadow-lg'

@@ -7,12 +7,14 @@ export interface SiteSettings {
   payment_method: PaymentMethod;
   login_enabled: boolean;
   signup_enabled: boolean;
+  whatsapp_quick_order: boolean;
 }
 
 const DEFAULTS: SiteSettings = {
   payment_method: 'whatsapp',
   login_enabled: true,
   signup_enabled: true,
+  whatsapp_quick_order: false,
 };
 
 export function useSettings(): { settings: SiteSettings; loading: boolean } {
@@ -28,6 +30,7 @@ export function useSettings(): { settings: SiteSettings; loading: boolean } {
           payment_method: (map.payment_method as PaymentMethod) ?? DEFAULTS.payment_method,
           login_enabled: map.login_enabled !== 'false',
           signup_enabled: map.signup_enabled !== 'false',
+          whatsapp_quick_order: map.whatsapp_quick_order === 'true',
         });
       }
       setLoading(false);
