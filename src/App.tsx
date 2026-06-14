@@ -14,6 +14,9 @@ import {
   User,
   ClipboardList,
   LogOut,
+  Clock,
+  Truck,
+  MapPin,
 } from 'lucide-react';
 import { WHATSAPP_NUMBER } from './constants';
 import { Product } from './types';
@@ -24,6 +27,8 @@ import { useCart } from './hooks/useCart';
 import { useHeroSlides } from './hooks/useHeroSlides';
 import { useDeliveryFee } from './features/order/hooks/useDeliveryFee';
 import BannerCarousel from './components/BannerCarousel';
+import ThemeDecorations from './components/ThemeDecorations';
+import ThemeRibbon from './components/ThemeRibbon';
 import { POSTCODE_LOOKUP, STATE_CITIES, SUPPORTED_STATES, isServiceablePostcode } from './data/deliveryZones';
 
 const TIME_SLOTS = [
@@ -40,7 +45,17 @@ export default function App() {
   const { user, profile, loading: authLoading, signOut } = useAuth();
   const { settings } = useSettings();
   const heroSlides = useHeroSlides();
+
+  useEffect(() => {
+    const theme = settings.active_theme;
+    if (theme === 'default') {
+      document.documentElement.removeAttribute('class');
+    } else {
+      document.documentElement.className = `theme-${theme}`;
+    }
+  }, [settings.active_theme]);
   const [stripeLoading, setStripeLoading] = useState(false);
+  const [hasBanners, setHasBanners] = useState<boolean | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState('');
@@ -323,10 +338,22 @@ export default function App() {
       </AnimatePresence>
 
       {/* Hero + Banners — unified section */}
-      <div id="hero" className="mt-16 bg-[#EDE0D0]">
+      <div id="hero" className="mt-16 bg-primary-cream">
+
+        <ThemeRibbon theme={settings.active_theme} />
 
         {/* Hero: product image + text */}
         <section className="relative overflow-hidden md:h-[70vh]">
+          <ThemeDecorations theme={settings.active_theme} />
+          {/* Subtle themed dot pattern */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: 'radial-gradient(circle, var(--color-primary-dark) 1px, transparent 1px)',
+              backgroundSize: '28px 28px',
+              opacity: 0.04,
+            }}
+          />
 
           {/* Desktop: product slideshow */}
           <div className="hidden md:flex absolute right-0 top-0 bottom-0 items-center z-0">
@@ -353,7 +380,7 @@ export default function App() {
                 </div>
               )}
             </div>
-            <div className="absolute inset-y-0 left-0 w-48 bg-gradient-to-r from-[#EDE0D0] to-transparent pointer-events-none" />
+            <div className="absolute inset-y-0 left-0 w-48 bg-gradient-to-r from-primary-cream to-transparent pointer-events-none" />
           </div>
 
           {/* Text content */}
@@ -389,7 +416,7 @@ export default function App() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
                 href="#menu"
-                className="inline-flex items-center px-10 py-5 bg-accent-caramel hover:bg-accent-caramel-dark text-white rounded-full font-semibold tracking-widest uppercase text-xs transition-all transform hover:scale-105 shadow-xl"
+                className="inline-flex items-center px-10 py-5 bg-primary-dark hover:opacity-85 text-primary-cream rounded-full font-semibold tracking-widest uppercase text-xs transition-all transform hover:scale-105 shadow-xl"
               >
                 Explore Menu
                 <ChevronRight className="ml-2 w-4 h-4" />
@@ -424,12 +451,51 @@ export default function App() {
         </section>
 
         {/* Banners — outside overflow-hidden, renders freely below hero */}
-        <div className="bg-primary-cream">
-          <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
-            <BannerCarousel />
+        {hasBanners !== false && (
+          <div className="bg-primary-cream">
+            <div className={`max-w-6xl mx-auto px-4 md:px-8 ${hasBanners ? 'py-6' : ''}`}>
+              <BannerCarousel onLoad={setHasBanners} />
+            </div>
           </div>
-        </div>
+        )}
 
+      </div>
+
+      {/* Info Strip — opening hours & delivery */}
+      <div className="bg-primary-dark/5 border-y border-primary-dark/10">
+        <div className="max-w-5xl mx-auto px-6 md:px-8 py-10 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-primary-dark/10">
+
+          <div className="flex flex-col items-center text-center px-6 py-6 sm:py-0">
+            <div className="w-11 h-11 rounded-2xl bg-accent-caramel/15 flex items-center justify-center mb-4">
+              <Clock className="w-5 h-5 text-accent-caramel" />
+            </div>
+            <p className="font-serif text-primary-dark text-base mb-1.5">Opening Hours</p>
+            <p className="text-primary-dark/50 text-sm leading-relaxed">
+              Mon – Sun<br />11am – 10pm
+            </p>
+          </div>
+
+          <div className="flex flex-col items-center text-center px-6 py-6 sm:py-0">
+            <div className="w-11 h-11 rounded-2xl bg-accent-caramel/15 flex items-center justify-center mb-4">
+              <Truck className="w-5 h-5 text-accent-caramel" />
+            </div>
+            <p className="font-serif text-primary-dark text-base mb-1.5">Delivery</p>
+            <p className="text-primary-dark/50 text-sm leading-relaxed">
+              Delivery fee is based on delivery location<br />Pre-order available
+            </p>
+          </div>
+
+          <div className="flex flex-col items-center text-center px-6 py-6 sm:py-0">
+            <div className="w-11 h-11 rounded-2xl bg-accent-caramel/15 flex items-center justify-center mb-4">
+              <MapPin className="w-5 h-5 text-accent-caramel" />
+            </div>
+            <p className="font-serif text-primary-dark text-base mb-1.5">Coverage Area</p>
+            <p className="text-primary-dark/50 text-sm leading-relaxed">
+              Klang Valley &amp; Selangor<br />Self-pickup also available
+            </p>
+          </div>
+
+        </div>
       </div>
 
       {/* Main Content Area */}

@@ -66,3 +66,166 @@
 .vertical-label {
   @apply fixed right-5 top-1/2 -translate-y-1/2 rotate-90 text-[10px] tracking-[4px] uppercase text-gray-soft opacity-30 select-none pointer-events-none hidden xl:block;
 }
+
+/* ─── Theme Decoration Animations ────────────────────────────────────────── */
+
+@keyframes deco-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-14px); }
+}
+
+@keyframes deco-sway {
+  0%, 100% { transform: rotate(-9deg) translateY(0); }
+  50%       { transform: rotate(9deg) translateY(-5px); }
+}
+
+@keyframes deco-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes deco-pulse {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%       { transform: scale(1.1); opacity: 0.6; }
+}
+
+@keyframes deco-drift {
+  0%,  100% { transform: translate(0,    0)    rotate(0deg); }
+  33%        { transform: translate(6px,  -10px) rotate(6deg); }
+  66%        { transform: translate(-4px, 4px)  rotate(-4deg); }
+}
+
+@keyframes deco-twinkle {
+  0%, 100% { opacity: 0.08; transform: scale(0.85); }
+  50%       { opacity: 0.35; transform: scale(1.1); }
+}
+
+/* ─── Seasonal Themes ─────────────────────────────────────────────────────── */
+
+html.theme-raya {
+  --color-primary-dark: #1B4332;
+  --color-accent-caramel: #D4AC0D;
+  --color-accent-caramel-dark: #B7950B;
+  --color-primary-cream: #F0FFF4;
+  --color-gray-soft: #7B8C7D;
+}
+
+html.theme-raya-haji {
+  --color-primary-dark: #164E4E;
+  --color-accent-caramel: #C07A3A;
+  --color-accent-caramel-dark: #A36330;
+  --color-primary-cream: #F0FAFA;
+  --color-gray-soft: #7A8C8C;
+}
+
+html.theme-maulidur-rasul {
+  --color-primary-dark: #1A3A2A;
+  --color-accent-caramel: #C9A84C;
+  --color-accent-caramel-dark: #A88A3D;
+  --color-primary-cream: #F5FFF8;
+  --color-gray-soft: #7D8C82;
+}
+
+html.theme-cny {
+  --color-primary-dark: #8B0000;
+  --color-accent-caramel: #D4AF37;
+  --color-accent-caramel-dark: #B5942E;
+  --color-primary-cream: #FFF8F0;
+  --color-gray-soft: #8C7B7B;
+}
+
+html.theme-dragon-boat {
+  --color-primary-dark: #1A4A3A;
+  --color-accent-caramel: #C0392B;
+  --color-accent-caramel-dark: #A03020;
+  --color-primary-cream: #F0FBF7;
+  --color-gray-soft: #7A8C85;
+}
+
+html.theme-mid-autumn {
+  --color-primary-dark: #1A2744;
+  --color-accent-caramel: #D4823A;
+  --color-accent-caramel-dark: #B56C2E;
+  --color-primary-cream: #FFF8F0;
+  --color-gray-soft: #8C8A82;
+}
+
+html.theme-deepavali {
+  --color-primary-dark: #3D1C6E;
+  --color-accent-caramel: #E8A020;
+  --color-accent-caramel-dark: #C48418;
+  --color-primary-cream: #FFF9F0;
+  --color-gray-soft: #8C7A8A;
+}
+
+html.theme-thaipusam {
+  --color-primary-dark: #7A3200;
+  --color-accent-caramel: #C0A860;
+  --color-accent-caramel-dark: #A89050;
+  --color-primary-cream: #FFF8EE;
+  --color-gray-soft: #8C8278;
+}
+
+html.theme-merdeka {
+  --color-primary-dark: #003087;
+  --color-accent-caramel: #CC0001;
+  --color-accent-caramel-dark: #AA0001;
+  --color-primary-cream: #FFFAF0;
+  --color-gray-soft: #7A8295;
+}
+
+html.theme-malaysia-day {
+  --color-primary-dark: #002366;
+  --color-accent-caramel: #CC0001;
+  --color-accent-caramel-dark: #AA0001;
+  --color-primary-cream: #F8FAFF;
+  --color-gray-soft: #7A8295;
+}
+
+html.theme-new-year {
+  --color-primary-dark: #0D1B2A;
+  --color-accent-caramel: #D4AF37;
+  --color-accent-caramel-dark: #B5942E;
+  --color-primary-cream: #F0F4FF;
+  --color-gray-soft: #808A9A;
+}
+
+html.theme-valentines {
+  --color-primary-dark: #6B1A2A;
+  --color-accent-caramel: #E8648A;
+  --color-accent-caramel-dark: #C84070;
+  --color-primary-cream: #FFF0F4;
+  --color-gray-soft: #8C7A82;
+}
+
+html.theme-mothers-day {
+  --color-primary-dark: #4A2050;
+  --color-accent-caramel: #E88AAA;
+  --color-accent-caramel-dark: #C86890;
+  --color-primary-cream: #FFF0F8;
+  --color-gray-soft: #8C7A8A;
+}
+
+html.theme-wesak {
+  --color-primary-dark: #4A3000;
+  --color-accent-caramel: #D4A020;
+  --color-accent-caramel-dark: #B08010;
+  --color-primary-cream: #FFFDF0;
+  --color-gray-soft: #8C8270;
+}
+
+html.theme-fathers-day {
+  --color-primary-dark: #1A2744;
+  --color-accent-caramel: #4A7FA8;
+  --color-accent-caramel-dark: #3A6A8C;
+  --color-primary-cream: #F0F4F8;
+  --color-gray-soft: #7A8A9A;
+}
+
+html.theme-christmas {
+  --color-primary-dark: #1A3D2B;
+  --color-accent-caramel: #C41E3A;
+  --color-accent-caramel-dark: #A01830;
+  --color-primary-cream: #FFF8F0;
+  --color-gray-soft: #7A8C7D;
+}

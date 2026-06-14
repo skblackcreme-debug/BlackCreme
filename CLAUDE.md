@@ -70,6 +70,33 @@ supabase/
 
 ---
 
+## Homepage Layout (top → bottom)
+
+```
+[ Navbar — fixed, 64px ]
+[ Hero — product slideshow + brand text + CTA ]
+[ Banner Carousel — promotional banners (hidden when no active banners) ]
+[ Info Strip — opening hours / delivery / coverage area ]
+[ Menu — product grid by category ]
+[ Order / Contact / Footer ]
+```
+
+---
+
+## Info Strip
+
+A three-column bar between the Banner Carousel and the Menu. Displays:
+
+| Column | Content |
+|---|---|
+| Opening Hours | Mon – Sun, 11am – 10pm |
+| Delivery | Fee subject to area · Pre-order available |
+| Coverage Area | Klang Valley & Selangor · Self-pickup available |
+
+Styled with warm off-white background (`#FAF5EE`), caramel icon badges, serif headings, and vertical dividers between columns. Collapses to stacked single column on mobile.
+
+---
+
 ## Key Patterns
 
 - **Single page, no router** — all sections are anchor-scrolled (`#hero`, `#menu`, `#order`, `#contact`).
@@ -226,6 +253,37 @@ Admin-controlled feature toggles. Managed via Admin Panel → Settings tab.
 - `payment_method` — `'whatsapp'` or `'stripe'`
 - `login_enabled` — `'true'` or `'false'`
 - `signup_enabled` — `'true'` or `'false'` — when `'false'`, `/register` shows a "Registration Closed" screen and LoginPage hides the "Create Account" link
+- `active_theme` — festive theme key (see Festive Themes section). Default: `'default'`
+
+---
+
+## Festive Themes
+
+Colour palette switching via CSS custom property overrides on `html`. Admin picks the theme from **Settings tab** → stored in `site_settings` → `App.tsx` applies `html.theme-<key>` class → all Tailwind tokens update instantly sitewide.
+
+| Key | Festival | Period |
+|---|---|---|
+| `default` | Black Crème (original) | Always |
+| `new-year` | New Year | 1 Jan |
+| `cny` | Chinese New Year | Jan / Feb |
+| `thaipusam` | Thaipusam | Jan / Feb |
+| `valentines` | Valentine's Day | 14 Feb |
+| `raya` | Hari Raya Aidilfitri | Mar / Apr |
+| `wesak` | Wesak Day | May |
+| `mothers-day` | Mother's Day | 2nd Sun May |
+| `dragon-boat` | Dumpling Festival | Jun |
+| `fathers-day` | Father's Day | 3rd Sun Jun |
+| `raya-haji` | Hari Raya Aidiladha | Jul / Aug |
+| `merdeka` | Hari Merdeka | 31 Aug |
+| `malaysia-day` | Malaysia Day | 16 Sep |
+| `maulidur-rasul` | Maulidur Rasul | Sep |
+| `mid-autumn` | Mid-Autumn Festival | Sep / Oct |
+| `deepavali` | Deepavali | Oct / Nov |
+| `christmas` | Christmas | Dec |
+
+Each theme overrides: `--color-primary-dark`, `--color-accent-caramel`, `--color-accent-caramel-dark`, `--color-primary-cream`, `--color-gray-soft`.
+Theme overrides are defined in `src/index.css` as `html.theme-<key> { ... }` blocks.
+`ThemeKey` union type is exported from `src/hooks/useSettings.ts`.
 
 ---
 
@@ -288,7 +346,7 @@ Five tabs:
 - **Products** — filtered by category tabs. Add/edit/delete products with image upload, stock qty, pricing. `is_available` is auto-set based on `stock_qty > 0`. Drag-and-drop reorder.
 - **Categories** — add/delete categories. Delete is blocked if products are still assigned to it. Drag-and-drop reorder.
 - **Orders** — view all orders, filterable by status. Each card shows customer name, order ref, scheduled date/time, delivery type, and order created datetime. Expand card for full details. Update status via dropdown. Delete order.
-- **Settings** — feature toggles: payment method (WhatsApp/Stripe), customer login, customer sign up.
+- **Settings** — feature toggles: payment method (WhatsApp/Stripe), customer login, customer sign up, festive theme picker.
 
 Drag-and-drop reorder (Banners/Products/Categories) shows a **Save Order** bar — must click Save to persist. Uses `@dnd-kit`.
 
@@ -303,6 +361,8 @@ Drag-and-drop reorder (Banners/Products/Categories) shows a **Save Order** bar �
 - **Direct video files (mp4 etc.)** — uses HTML `<video>` element, autoplays muted, advances on `onEnded`
 - Fade transition (opacity) — not AnimatePresence, so `#yt-player` div is always in DOM during transition
 - Contained layout: `max-w-6xl mx-auto` with padding, `rounded-2xl`, `shadow-xl`
+- Accepts optional `onLoad?: (hasContent: boolean) => void` prop — called after the Supabase fetch resolves with `true` if banners exist, `false` if none
+- `App.tsx` tracks `hasBanners: boolean | null` (starts `null` = loading). The wrapper div is hidden (`hasBanners !== false`) when confirmed empty, preventing a blank padding gap below the hero
 
 ---
 

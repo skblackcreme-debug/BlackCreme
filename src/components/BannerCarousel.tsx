@@ -21,7 +21,11 @@ function extractVideoId(embedUrl: string): string | null {
   return match ? match[1] : null;
 }
 
-export default function BannerCarousel() {
+interface Props {
+  onLoad?: (hasContent: boolean) => void;
+}
+
+export default function BannerCarousel({ onLoad }: Props) {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
@@ -46,8 +50,10 @@ export default function BannerCarousel() {
       .eq('is_active', true)
       .order('display_order')
       .then(({ data }) => {
-        setBanners((data ?? []).filter(b => b.media_url));
+        const filtered = (data ?? []).filter(b => b.media_url);
+        setBanners(filtered);
         setLoading(false);
+        onLoad?.(filtered.length > 0);
       });
   }, []);
 

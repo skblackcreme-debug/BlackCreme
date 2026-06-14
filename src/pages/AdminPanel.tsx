@@ -1100,6 +1100,27 @@ function SettingsTab() {
   const signupEnabled = settings.signup_enabled !== 'false';
   const paymentMethod = settings.payment_method ?? 'whatsapp';
   const quickOrder = settings.whatsapp_quick_order === 'true';
+  const activeTheme = settings.active_theme ?? 'default';
+
+  const THEMES = [
+    { key: 'default',        label: 'Black Crème',          period: 'Default',         primary: '#2C1810', accent: '#C4956A' },
+    { key: 'new-year',       label: 'New Year',             period: '1 Jan',           primary: '#0D1B2A', accent: '#D4AF37' },
+    { key: 'cny',            label: 'Chinese New Year',     period: 'Jan / Feb',       primary: '#8B0000', accent: '#D4AF37' },
+    { key: 'thaipusam',      label: 'Thaipusam',            period: 'Jan / Feb',       primary: '#7A3200', accent: '#C0A860' },
+    { key: 'valentines',     label: "Valentine's Day",      period: '14 Feb',          primary: '#6B1A2A', accent: '#E8648A' },
+    { key: 'wesak',          label: 'Wesak Day',            period: 'May',             primary: '#4A3000', accent: '#D4A020' },
+    { key: 'mothers-day',    label: "Mother's Day",         period: '2nd Sun May',     primary: '#4A2050', accent: '#E88AAA' },
+    { key: 'raya',           label: 'Hari Raya Aidilfitri', period: 'Mar / Apr',       primary: '#1B4332', accent: '#D4AC0D' },
+    { key: 'dragon-boat',    label: 'Dumpling Festival',    period: 'Jun',             primary: '#1A4A3A', accent: '#C0392B' },
+    { key: 'fathers-day',    label: "Father's Day",         period: '3rd Sun Jun',     primary: '#1A2744', accent: '#4A7FA8' },
+    { key: 'merdeka',        label: 'Hari Merdeka',         period: '31 Aug',          primary: '#003087', accent: '#CC0001' },
+    { key: 'malaysia-day',   label: 'Malaysia Day',         period: '16 Sep',          primary: '#002366', accent: '#CC0001' },
+    { key: 'maulidur-rasul', label: 'Maulidur Rasul',       period: 'Sep',             primary: '#1A3A2A', accent: '#C9A84C' },
+    { key: 'raya-haji',      label: 'Hari Raya Aidiladha',  period: 'Jul / Aug',       primary: '#164E4E', accent: '#C07A3A' },
+    { key: 'mid-autumn',     label: 'Mid-Autumn Festival',  period: 'Sep / Oct',       primary: '#1A2744', accent: '#D4823A' },
+    { key: 'deepavali',      label: 'Deepavali',            period: 'Oct / Nov',       primary: '#3D1C6E', accent: '#E8A020' },
+    { key: 'christmas',      label: 'Christmas',            period: 'Dec',             primary: '#1A3D2B', accent: '#C41E3A' },
+  ] as const;
 
   return (
     <div>
@@ -1211,6 +1232,47 @@ function SettingsTab() {
             </div>
           </div>
         )}
+
+        {/* Festive Theme */}
+        <div className="bg-white rounded-xl p-5 shadow-sm">
+          <p className="font-medium text-sm mb-1">Festive Theme</p>
+          <p className="text-[11px] text-gray-400 mb-4">Change the storefront colour palette to match the current season. Takes effect immediately for all visitors.</p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            {THEMES.map((t) => {
+              const isActive = activeTheme === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => updateSetting('active_theme', t.key)}
+                  disabled={saving === 'active_theme'}
+                  className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all text-left disabled:opacity-60 ${
+                    isActive
+                      ? 'border-primary-dark bg-primary-dark/5'
+                      : 'border-transparent hover:border-primary-dark/20 hover:bg-gray-50'
+                  }`}
+                >
+                  {/* Colour swatch */}
+                  <div className="w-full h-8 rounded-lg overflow-hidden flex">
+                    <div className="w-1/2 h-full" style={{ backgroundColor: t.primary }} />
+                    <div className="w-1/2 h-full" style={{ backgroundColor: t.accent }} />
+                  </div>
+                  <div className="w-full">
+                    <p className="text-[11px] font-semibold text-primary-dark leading-tight">{t.label}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{t.period}</p>
+                  </div>
+                  {isActive && (
+                    <div className="absolute top-2 right-2 w-3.5 h-3.5 rounded-full bg-primary-dark flex items-center justify-center">
+                      <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 12 12">
+                        <path d="M10 3L5 8.5 2 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                      </svg>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
       </div>
     </div>
